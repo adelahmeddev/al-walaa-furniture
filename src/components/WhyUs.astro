@@ -1,6 +1,6 @@
 ---
 import { useTranslations } from '../i18n/ui';
-import { ShieldCheck, Receipt, Clock, Users } from '@lucide/astro';
+import { Receipt, Clock, Users } from '@lucide/astro';
 
 interface Props {
   lang: 'ar' | 'en';
@@ -14,11 +14,6 @@ const features = [
     icon: Clock,
     title: t('whyus.exp'),
     desc: t('whyus.exp.desc'),
-  },
-  {
-    icon: ShieldCheck,
-    title: t('whyus.safe'),
-    desc: t('whyus.safe.desc'),
   },
   {
     icon: Receipt,
@@ -56,10 +51,10 @@ const features = [
         </div>
       </div>
 
-      <!-- End Column: 2x2 Structured Guarantees -->
+      <!-- End Column: Structured Guarantees -->
       <div class="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-5">
-        {features.map((feature) => (
-          <div class="bg-white rounded-2xl p-4 sm:p-6 border border-stone-200 flex sm:block items-start gap-3.5">
+        {features.map((feature, idx) => (
+          <div class={`bg-white rounded-2xl p-4 sm:p-6 border border-stone-200 flex sm:block items-start gap-3.5 ${idx === features.length - 1 && features.length % 2 === 1 ? 'sm:col-span-2' : ''}`}>
             <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-surface-warm border border-stone-200 flex items-center justify-center shrink-0 sm:mb-4">
               <feature.icon class="w-5 h-5 text-accent" aria-hidden="true" />
             </div>
