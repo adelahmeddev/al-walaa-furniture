@@ -1,7 +1,12 @@
-import settings from '../data/settings.json';
+import { getInitialSettings, type SiteSettings } from './settings';
 import { ui } from '../i18n/ui';
 
-export function buildSeoSchemas(lang: 'ar' | 'en', siteOrigin: string, pageUrl: string) {
+export function buildSeoSchemas(
+  lang: 'ar' | 'en',
+  siteOrigin: string,
+  pageUrl: string,
+  settings: SiteSettings = getInitialSettings()
+) {
   const isAr = lang === 'ar';
   const orgId = `${siteOrigin}/#organization`;
   const dict = ui[lang] as Record<string, string>;

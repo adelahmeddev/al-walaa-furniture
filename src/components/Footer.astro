@@ -1,20 +1,19 @@
 ---
 import { useTranslations } from '../i18n/ui';
-import defaultSettings from '../data/settings.json';
-import { getSocialLinks, buildWhatsAppLink } from '../utils/settings';
+import { getInitialSettings, getSocialLinks, buildWhatsAppLink, type SiteSettings } from '../utils/settings';
 import SocialIcon from './SocialIcon.astro';
 import { Phone, MapPin, Clock, MessageCircle, Lock } from '@lucide/astro';
 
 interface Props {
   lang: 'ar' | 'en';
+  settings?: SiteSettings;
 }
 
-const { lang } = Astro.props;
+const { lang, settings = getInitialSettings() } = Astro.props;
 const t = useTranslations(lang);
 const year = new Date().getFullYear();
 const isAr = lang === 'ar';
 
-const settings = defaultSettings;
 const phone = settings.phone;
 const displayPhone = settings.displayPhone;
 const message = isAr

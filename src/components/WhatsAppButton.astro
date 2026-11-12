@@ -1,18 +1,17 @@
 ---
 import { useTranslations } from '../i18n/ui';
-import defaultSettings from '../data/settings.json';
-import { buildWhatsAppLink } from '../utils/settings';
+import { buildWhatsAppLink, getInitialSettings, type SiteSettings } from '../utils/settings';
 import { Phone, MessageCircle } from '@lucide/astro';
 
 interface Props {
   lang: 'ar' | 'en';
+  settings?: SiteSettings;
 }
 
-const { lang } = Astro.props;
+const { lang, settings = getInitialSettings() } = Astro.props;
 const t = useTranslations(lang);
 const isAr = lang === 'ar';
 
-const settings = defaultSettings;
 const phone = settings.phone;
 const message = isAr
   ? 'مرحباً، أود حجز خدمة نقل عفش'

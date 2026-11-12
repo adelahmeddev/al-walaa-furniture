@@ -1,13 +1,14 @@
 ---
 import { useTranslations } from '../i18n/ui';
-import settings from '../data/settings.json';
+import { getInitialSettings, type SiteSettings } from '../utils/settings';
 import { MapPin, Navigation } from '@lucide/astro';
 
 interface Props {
   lang: 'ar' | 'en';
+  settings?: SiteSettings;
 }
 
-const { lang } = Astro.props;
+const { lang, settings = getInitialSettings() } = Astro.props;
 const t = useTranslations(lang);
 const isAr = lang === 'ar';
 

@@ -1,4 +1,5 @@
 import defaultSettings from '../data/settings.json';
+import defaultMedia from '../data/media.json';
 
 export interface SiteSettings {
   phone: string;
@@ -15,6 +16,20 @@ export interface SiteSettings {
     youtube?: string;
     [key: string]: string | undefined;
   };
+}
+
+export interface MediaItem {
+  id: string;
+  type: 'image' | 'video';
+  src: string;
+  thumbnail: string;
+  category: string;
+  title: string;
+  titleEn?: string;
+  alt?: string;
+  altEn?: string;
+  desc: string;
+  descEn?: string;
 }
 
 export interface SocialLinkItem {
@@ -54,4 +69,79 @@ export function buildWhatsAppLink(number: string, messageText: string): string {
 
 export function getInitialSettings(): SiteSettings {
   return defaultSettings as SiteSettings;
+}
+
+export function getDefaultMediaItems(): MediaItem[] {
+  return defaultMedia.items as MediaItem[];
+}
+
+function safeUrlOrEmpty(raw: unknown): string {
+  const val = String(raw || '').trim();
+  if (!val) return '';
+  if (val.startsWith('/')) return val;
+  try {
+    const parsed = new URL(val);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? parsed.href : '';
+  } catch {
+    return '';
+  }
+}
+
+export function sanitizeSettings(input: Partial<SiteSettings>): SiteSettings {
+  const base = getInitialSettings();
+  const phone = String(input.phone ?? base.phone).replace(/[^\d+]/g, '').trim() || base.phone;
+  const whatsappNumber =
+    String(input.whatsappNumber ?? base.whatsappNumber).replace(/\D/g, '').trim() || base.whatsappNumber;
+  const displayPhone = String(input.displayPhone ?? base.displayPhone).trim() || formatEgyptPhone(phone, base.displayPhone);
+  const workingHours = String(input.workingHours ?? base.workingHours).trim() || base.workingHours;
+
+  return {
+    phone,
+    displayPhone,
+    whatsappNumber,
+    workingHours,
+    topBar: {
+      enabled: input.topBar?.enabled !== false,
+    },
+    social: {
+      facebook: safeUrlOrEmpty(input.social?.facebook),
+      instagram: safeUrlOrEmpty(input.social?.instagram),
+      tiktok: safeUrlOrEmpty(input.social?.tiktok),
+      youtube: safeUrlOrEmpty(input.social?.youtube),
+    },
+  };
+}
+
+export function sanitizeMediaItems(items: unknown): MediaItem[] {
+  if (!Array.isArray(items)) return [];
+  const validCategories = new Set(['moving', 'packing', 'team', 'storage']);
+
+  return items
+    .map((raw, index): MediaItem | null => {
+      if (!raw || typeof raw !== 'object') return null;
+      const item = raw as Record<string, unknown>;
+      const type = item.type === 'video' ? 'video' : 'image';
+      const src = safeUrlOrEmpty(item.src);
+      const title = String(item.title || '').trim();
+      if (!src || !title) return null;
+
+      const rawThumb = safeUrlOrEmpty(item.thumbnail);
+      const thumbnail = rawThumb || (type === 'video' ? '/media/truck-loading-cairo.jpg' : src);
+      const category = validCategories.has(String(item.category)) ? String(item.category) : 'moving';
+
+      return {
+        id: String(item.id || `${Date.now()}-${index}`).trim(),
+        type,
+        src,
+        thumbnail,
+        category,
+        title,
+        titleEn: String(item.titleEn || title).trim(),
+        alt: String(item.alt || title).trim(),
+        altEn: String(item.altEn || item.titleEn || title).trim(),
+        desc: String(item.desc || '').trim(),
+        descEn: String(item.descEn || item.desc || '').trim(),
+      };
+    })
+    .filter((item): item is MediaItem => item !== null);
 }

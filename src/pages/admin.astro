@@ -1,8 +1,8 @@
 ---
 import '../styles/global.css';
 import defaultMedia from '../data/media.json';
-import defaultSettings from '../data/settings.json';
 import { SOCIAL_PLATFORMS } from '../utils/settings';
+import { getMediaItems, getRuntimeEnv, getSiteSettings } from '../utils/db';
 import {
   Plus,
   Key,
@@ -18,7 +18,16 @@ import {
   Sliders,
 } from '@lucide/astro';
 
-const devKeyDefault = 'mover-dev-2024';
+export const prerender = false;
+
+const { db } = getRuntimeEnv(Astro.locals);
+const [initialSettings, initialMediaItems] = await Promise.all([
+  getSiteSettings(db),
+  getMediaItems(db),
+]);
+const initialMedia = { items: initialMediaItems };
+const dbConnected = Boolean(db);
+Astro.response.headers.set('Cache-Control', 'no-store');
 ---
 
 <!doctype html>
@@ -295,10 +304,10 @@ const devKeyDefault = 'mover-dev-2024';
           <div id="stat-videos" class="text-3xl font-extrabold text-rose-300 mt-1 tabular-nums">0</div>
         </div>
         <div class="bg-slate-950 border border-slate-800 rounded-2xl p-5">
-          <div class="text-xs font-bold text-slate-300">حالة الحفظ</div>
-          <div class="text-sm font-bold text-emerald-300 mt-2 flex items-center gap-1.5">
+          <div class="text-xs font-bold text-slate-300">حالة قاعدة البيانات</div>
+          <div id="db-status-badge" class={`text-sm font-bold mt-2 flex items-center gap-1.5 ${dbConnected ? 'text-emerald-300' : 'text-amber-300'}`}>
             <CheckCircle class="w-4 h-4" aria-hidden="true" />
-            <span>محفوظة محلياً</span>
+            <span>{dbConnected ? 'متصل بـ Cloudflare D1' : 'بانتظار ربط D1'}</span>
           </div>
         </div>
       </div>
@@ -423,7 +432,7 @@ const devKeyDefault = 'mover-dev-2024';
     </main>
   </div>
 
-  <script define:vars={{ defaultMedia, defaultSettings, devKeyDefault }}>
+  <script define:vars={{ defaultMedia, initialMedia, initialSettings, dbConnected }}>
     const authGate = document.getElementById('auth-gate');
     const dashboard = document.getElementById('dashboard');
     const authForm = document.getElementById('auth-form');
@@ -432,58 +441,71 @@ const devKeyDefault = 'mover-dev-2024';
     const lockBtn = document.getElementById('lock-btn');
     const toast = document.getElementById('admin-toast');
     const toastText = document.getElementById('admin-toast-text');
+    const SESSION_KEY = 'mover_admin_key';
 
-    function showToast(msg) {
+    function showToast(msg, isError = false) {
       if (!toast || !toastText) return;
       toastText.textContent = msg;
+      toast.classList.toggle('bg-emerald-900/90', !isError);
+      toast.classList.toggle('border-emerald-600', !isError);
+      toast.classList.toggle('text-emerald-100', !isError);
+      toast.classList.toggle('bg-rose-900/90', isError);
+      toast.classList.toggle('border-rose-600', isError);
+      toast.classList.toggle('text-rose-100', isError);
       toast.classList.remove('hidden');
-      setTimeout(() => toast.classList.add('hidden'), 3500);
+      setTimeout(() => toast.classList.add('hidden'), 4000);
     }
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const keyParam = urlParams.get('key');
+    function getAdminKey() {
+      return sessionStorage.getItem(SESSION_KEY) || '';
+    }
 
-    function unlock() {
+    async function verifyKey(candidateKey) {
+      try {
+        const res = await fetch('/api/auth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: candidateKey }),
+        });
+        return res.ok;
+      } catch {
+        return false;
+      }
+    }
+
+    function unlock(verifiedKey) {
+      sessionStorage.setItem(SESSION_KEY, verifiedKey);
       authGate?.classList.add('hidden');
       dashboard?.classList.remove('hidden');
-      sessionStorage.setItem('mover_admin_authed', 'true');
+      authError?.classList.add('hidden');
     }
 
-    if (keyParam === devKeyDefault || sessionStorage.getItem('mover_admin_authed') === 'true') {
-      unlock();
-    }
+    (async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const keyParam = urlParams.get('key');
+      const existing = keyParam || getAdminKey();
+      if (existing && (await verifyKey(existing))) {
+        unlock(existing);
+      }
+    })();
 
-    authForm?.addEventListener('submit', (e) => {
+    authForm?.addEventListener('submit', async (e) => {
       e.preventDefault();
-      if (accessKeyInput && accessKeyInput.value === devKeyDefault) {
-        unlock();
+      const val = accessKeyInput?.value || '';
+      if (await verifyKey(val)) {
+        unlock(val);
       } else {
         authError?.classList.remove('hidden');
       }
     });
 
     lockBtn?.addEventListener('click', () => {
-      sessionStorage.removeItem('mover_admin_authed');
+      sessionStorage.removeItem(SESSION_KEY);
       window.location.href = '/admin';
     });
 
-    // Contact, Top Bar & Social Settings Management
-    let storedSettings = null;
-    try {
-      storedSettings = JSON.parse(localStorage.getItem('mover_settings') || 'null');
-    } catch {}
-    let currentSettings = {
-      ...defaultSettings,
-      ...(storedSettings || {}),
-      topBar: {
-        ...(defaultSettings.topBar || {}),
-        ...(storedSettings?.topBar || {}),
-      },
-      social: {
-        ...(defaultSettings.social || {}),
-        ...(storedSettings?.social || {}),
-      },
-    };
+    // Contact, Top Bar & Social Settings Management (backed by Cloudflare D1)
+    let currentSettings = JSON.parse(JSON.stringify(initialSettings));
 
     const whatsappInput = document.getElementById('setting-whatsapp');
     const phoneInput = document.getElementById('setting-phone');
@@ -497,19 +519,23 @@ const devKeyDefault = 'mover-dev-2024';
     const settingsForm = document.getElementById('settings-form');
     const settingsStatus = document.getElementById('settings-status');
 
-    if (whatsappInput) whatsappInput.value = currentSettings.whatsappNumber || '';
-    if (phoneInput) phoneInput.value = currentSettings.phone || '';
-    if (displayPhoneInput) displayPhoneInput.value = currentSettings.displayPhone || '';
-    if (hoursInput) hoursInput.value = currentSettings.workingHours || '';
-    if (topBarEnabledInput) topBarEnabledInput.checked = currentSettings.topBar?.enabled !== false;
-    if (socialFacebookInput) socialFacebookInput.value = currentSettings.social?.facebook || '';
-    if (socialInstagramInput) socialInstagramInput.value = currentSettings.social?.instagram || '';
-    if (socialTiktokInput) socialTiktokInput.value = currentSettings.social?.tiktok || '';
-    if (socialYoutubeInput) socialYoutubeInput.value = currentSettings.social?.youtube || '';
+    function populateSettingsForm(data) {
+      if (whatsappInput) whatsappInput.value = data.whatsappNumber || '';
+      if (phoneInput) phoneInput.value = data.phone || '';
+      if (displayPhoneInput) displayPhoneInput.value = data.displayPhone || '';
+      if (hoursInput) hoursInput.value = data.workingHours || '';
+      if (topBarEnabledInput) topBarEnabledInput.checked = data.topBar?.enabled !== false;
+      if (socialFacebookInput) socialFacebookInput.value = data.social?.facebook || '';
+      if (socialInstagramInput) socialInstagramInput.value = data.social?.instagram || '';
+      if (socialTiktokInput) socialTiktokInput.value = data.social?.tiktok || '';
+      if (socialYoutubeInput) socialYoutubeInput.value = data.social?.youtube || '';
+    }
 
-    settingsForm?.addEventListener('submit', (e) => {
+    populateSettingsForm(currentSettings);
+
+    settingsForm?.addEventListener('submit', async (e) => {
       e.preventDefault();
-      currentSettings = {
+      const payload = {
         whatsappNumber: whatsappInput.value.trim(),
         phone: phoneInput.value.trim(),
         displayPhone: displayPhoneInput.value.trim(),
@@ -524,12 +550,30 @@ const devKeyDefault = 'mover-dev-2024';
           youtube: (socialYoutubeInput?.value || '').trim(),
         },
       };
-      localStorage.setItem('mover_settings', JSON.stringify(currentSettings));
-      if (settingsStatus) {
-        settingsStatus.classList.remove('hidden');
-        setTimeout(() => settingsStatus.classList.add('hidden'), 4000);
+
+      try {
+        const res = await fetch('/api/settings', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-key': getAdminKey(),
+          },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'فشل الحفظ في قاعدة البيانات');
+        }
+        currentSettings = data.settings;
+        populateSettingsForm(currentSettings);
+        if (settingsStatus) {
+          settingsStatus.classList.remove('hidden');
+          setTimeout(() => settingsStatus.classList.add('hidden'), 4000);
+        }
+        showToast('تم حفظ وتطبيق الإعدادات في قاعدة البيانات لجميع الزوار.');
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : 'تعذر الحفظ في قاعدة البيانات.', true);
       }
-      showToast('تم حفظ وتحديث الإعدادات بنجاح.');
     });
 
     document.getElementById('copy-settings-json')?.addEventListener('click', () => {
@@ -548,18 +592,29 @@ const devKeyDefault = 'mover-dev-2024';
       URL.revokeObjectURL(url);
     });
 
-    // Media Data Management
-    let mediaData = null;
-    try {
-      mediaData = JSON.parse(localStorage.getItem('mover_custom_media') || 'null');
-    } catch {}
-    if (!mediaData || !Array.isArray(mediaData.items)) {
-      mediaData = JSON.parse(JSON.stringify(defaultMedia));
-    }
+    // Media Data Management (backed by Cloudflare D1)
+    let mediaData = JSON.parse(JSON.stringify(initialMedia));
 
-    function saveState() {
-      localStorage.setItem('mover_custom_media', JSON.stringify(mediaData));
-      renderList();
+    async function saveState(successMsg) {
+      try {
+        const res = await fetch('/api/media', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-key': getAdminKey(),
+          },
+          body: JSON.stringify({ items: mediaData.items }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'فشل حفظ المعرض في قاعدة البيانات');
+        }
+        mediaData.items = data.items;
+        renderList();
+        if (successMsg) showToast(successMsg);
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : 'تعذر الحفظ في قاعدة البيانات.', true);
+      }
     }
 
     function updateStats() {
@@ -578,7 +633,7 @@ const devKeyDefault = 'mover-dev-2024';
       const temp = mediaData.items[index];
       mediaData.items[index] = mediaData.items[newIndex];
       mediaData.items[newIndex] = temp;
-      saveState();
+      saveState('تم تحديث ترتيب المعرض في قاعدة البيانات.');
     }
 
     function renderList() {
@@ -672,8 +727,7 @@ const devKeyDefault = 'mover-dev-2024';
         delBtn.addEventListener('click', () => {
           if (confirm('هل أنت متأكد من حذف هذا العنصر من المعرض؟')) {
             mediaData.items = mediaData.items.filter((i) => i.id !== item.id);
-            saveState();
-            showToast('تم حذف العنصر وتحديث القائمة.');
+            saveState('تم حذف العنصر وحفظ المعرض في قاعدة البيانات.');
           }
         });
 
@@ -684,7 +738,7 @@ const devKeyDefault = 'mover-dev-2024';
     }
 
     const addForm = document.getElementById('add-media-form');
-    addForm?.addEventListener('submit', (e) => {
+    addForm?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const type = document.getElementById('item-type').value;
       const category = document.getElementById('item-category').value;
@@ -711,12 +765,13 @@ const devKeyDefault = 'mover-dev-2024';
         category,
         title,
         titleEn: titleEn || title,
+        alt: title,
+        altEn: titleEn || title,
         desc,
         descEn: desc,
       });
-      saveState();
+      await saveState('تمت إضافة العنصر وحفظ المعرض في قاعدة البيانات.');
       addForm.reset();
-      showToast('تمت إضافة العنصر وتحديث المعرض.');
     });
 
     document.getElementById('copy-json-btn')?.addEventListener('click', () => {
@@ -736,10 +791,9 @@ const devKeyDefault = 'mover-dev-2024';
     });
 
     document.getElementById('reset-default-btn')?.addEventListener('click', () => {
-      if (confirm('هل تريد استعادة البيانات الافتراضية؟')) {
+      if (confirm('هل تريد استعادة البيانات الافتراضية وحفظها في قاعدة البيانات؟')) {
         mediaData = JSON.parse(JSON.stringify(defaultMedia));
-        saveState();
-        showToast('تمت استعادة البيانات الافتراضية.');
+        saveState('تمت استعادة البيانات الافتراضية في قاعدة البيانات.');
       }
     });
 

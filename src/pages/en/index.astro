@@ -13,28 +13,39 @@ import FAQ from '../../components/FAQ.astro';
 import CTABanner from '../../components/CTABanner.astro';
 import WhatsAppButton from '../../components/WhatsAppButton.astro';
 import Footer from '../../components/Footer.astro';
+import { getMediaItems, getRuntimeEnv, getSiteSettings } from '../../utils/db';
+
+export const prerender = false;
 
 const lang = 'en';
+const { db } = getRuntimeEnv(Astro.locals);
+const [settings, mediaItems] = await Promise.all([
+  getSiteSettings(db),
+  getMediaItems(db),
+]);
+
+Astro.response.headers.set('Cache-Control', 'no-store');
 ---
 
 <Layout
   title="Furniture Moving in Cairo & Egypt | Al Walaa — Packing, Hoisting & Reassembly"
   description="Professional furniture moving company in Cairo & all Egypt. 5-layer packing, hydraulic hoists to floor 20, carpentry reassembly. Written damage guarantee & fixed pricing."
   lang={lang}
+  settings={settings}
 >
-  <Header lang={lang} />
+  <Header lang={lang} settings={settings} />
   <main id="main-content" tabindex="-1">
-    <Hero lang={lang} />
-    <MediaGallery lang={lang} />
+    <Hero lang={lang} settings={settings} />
+    <MediaGallery lang={lang} items={mediaItems} />
     <Stats lang={lang} />
-    <Services lang={lang} />
+    <Services lang={lang} settings={settings} />
     <WhyUs lang={lang} />
     <HowItWorks lang={lang} />
-    <Areas lang={lang} />
+    <Areas lang={lang} settings={settings} />
     <Testimonials lang={lang} />
-    <FAQ lang={lang} />
-    <CTABanner lang={lang} />
+    <FAQ lang={lang} settings={settings} />
+    <CTABanner lang={lang} settings={settings} />
   </main>
-  <WhatsAppButton lang={lang} />
-  <Footer lang={lang} />
+  <WhatsAppButton lang={lang} settings={settings} />
+  <Footer lang={lang} settings={settings} />
 </Layout>

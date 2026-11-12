@@ -1,18 +1,17 @@
 ---
 import { useTranslations } from '../i18n/ui';
-import defaultSettings from '../data/settings.json';
-import { buildWhatsAppLink } from '../utils/settings';
+import { buildWhatsAppLink, getInitialSettings, type SiteSettings } from '../utils/settings';
 import { Truck, ShieldCheck, Star, Phone, MessageCircle, CheckCircle2, MapPin, ChevronDown } from '@lucide/astro';
 
 interface Props {
   lang: 'ar' | 'en';
+  settings?: SiteSettings;
 }
 
-const { lang } = Astro.props;
+const { lang, settings = getInitialSettings() } = Astro.props;
 const t = useTranslations(lang);
 const isAr = lang === 'ar';
 
-const settings = defaultSettings;
 const phone = settings.phone;
 const defaultMessage = isAr
   ? 'مرحباً، أريد الاستفسار وحجز خدمة نقل العفش مع خصم 20%'
@@ -268,19 +267,11 @@ const roomSizes = [
     const sizeVal = sizeEl ? sizeEl.value : '';
     const winchVal = winchEl ? winchEl.value : '';
 
-    let customSettings = null;
-    try {
-      customSettings = JSON.parse(localStorage.getItem('mover_settings') || 'null');
-    } catch {}
-    const targetPhone = (customSettings && customSettings.whatsappNumber)
-      ? customSettings.whatsappNumber
-      : defaultWhatsapp;
-
     const text = lang === 'en'
       ? `Hello Al Walaa Moving,\nQuote & 20% discount request:\n- From: ${fromVal}\n- To: ${toVal}\n- Size: ${sizeVal}\n- Hydraulic Hoist: ${winchVal}\nPlease share the cost estimate and available slots.`
       : `مرحباً شركة الولاء لنقل الأثاث\nطلب عرض سعر وخصم (20%) لنقل عفش:\n- من: ${fromVal}\n- إلى: ${toVal}\n- الحجم: ${sizeVal}\n- الونش: ${winchVal}\nبرجاء إرسال تفاصيل التكلفة والمواعيد المتاحة.`;
 
-    const targetUrl = `https://wa.me/${targetPhone}?text=${encodeURIComponent(text)}`;
+    const targetUrl = `https://wa.me/${defaultWhatsapp}?text=${encodeURIComponent(text)}`;
     window.open(targetUrl, '_blank', 'noopener,noreferrer');
   });
 </script>
