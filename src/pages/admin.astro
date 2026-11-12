@@ -16,6 +16,15 @@ import {
   Clock,
   Save,
   Sliders,
+  ChartBar,
+  Images,
+  TrendingUp,
+  MapPin,
+  Globe,
+  Calendar,
+  RefreshCw,
+  Activity,
+  Database,
 } from '@lucide/astro';
 
 export const prerender = false;
@@ -31,7 +40,7 @@ Astro.response.headers.set('Cache-Control', 'no-store');
 ---
 
 <!doctype html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" class="overflow-x-hidden">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -46,411 +55,712 @@ Astro.response.headers.set('Cache-Control', 'no-store');
   />
   <style>
     body { font-family: 'IBM Plex Sans Arabic', 'Cairo', system-ui, sans-serif; }
-    h1, h2 { font-family: 'Cairo', 'IBM Plex Sans Arabic', system-ui, sans-serif; }
+    h1, h2, h3 { font-family: 'Cairo', 'IBM Plex Sans Arabic', system-ui, sans-serif; }
     code, pre { font-family: 'JetBrains Mono', monospace; }
+
+    @keyframes toast-slide-in {
+      from {
+        opacity: 0;
+        transform: translateY(-12px) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes toast-progress {
+      from { transform: scaleX(1); }
+      to { transform: scaleX(0); }
+    }
+
+    @keyframes panel-fade-in {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .toast-animate {
+      animation: toast-slide-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .toast-progress-bar {
+      transform-origin: right center;
+      animation: toast-progress 4s linear forwards;
+    }
+
+    .tab-panel-animate {
+      animation: panel-fade-in 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
   </style>
 </head>
-<body class="dark-surface bg-primary-900 text-slate-100 min-h-screen">
+<body class="dark-surface bg-[#050d1a] text-slate-100 min-h-screen overflow-x-hidden relative selection:bg-accent-400/30 selection:text-accent-200">
+  <!-- Subtle ambient backdrop glow -->
+  <div class="pointer-events-none fixed inset-0 overflow-hidden z-0" aria-hidden="true">
+    <div class="absolute -top-40 start-1/4 w-[520px] h-[520px] rounded-full bg-accent-500/5 blur-3xl"></div>
+    <div class="absolute top-1/3 -end-32 w-[420px] h-[420px] rounded-full bg-sky-500/5 blur-3xl"></div>
+  </div>
 
   <!-- Authentication Guard Gate -->
-  <div id="auth-gate" class="fixed inset-0 z-50 bg-primary-dark flex items-center justify-center p-4">
-    <div class="max-w-md w-full bg-primary-800 border border-white/15 rounded-2xl p-8 shadow-2xl text-center">
-      <div class="w-14 h-14 bg-accent-700/20 border border-accent-400/30 text-accent-300 rounded-xl flex items-center justify-center mx-auto mb-5">
+  <div id="auth-gate" class="fixed inset-0 z-50 bg-[#040a15]/95 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-slate-900/90 border border-white/15 rounded-2xl p-8 shadow-2xl text-center relative overflow-hidden">
+      <div class="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-accent-400/20 via-accent-400 to-accent-400/20"></div>
+      <div class="w-14 h-14 bg-gradient-to-br from-accent-500/25 to-accent-700/10 border border-accent-400/30 text-accent-300 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg">
         <Key class="w-7 h-7" aria-hidden="true" />
       </div>
-      <h1 class="text-2xl font-extrabold text-white mb-2">لوحة تحكم المطور</h1>
+      <h1 class="text-2xl font-extrabold text-white mb-2">لوحة تحكم الإدارة</h1>
       <p class="text-sm text-slate-300 mb-6 leading-relaxed">
-        إدارة أرقام التواصل والواتساب وترتيب صور وفيديوهات المعرض. أدخل مفتاح المطور للمتابعة:
+        متابعة إحصائيات الزيارات، تعديل أرقام التواصل، وإدارة معرض الصور والفيديو. أدخل مفتاح الدخول للمتابعة:
       </p>
 
       <form id="auth-form" class="space-y-4">
-        <label for="access-key-input" class="visually-hidden">مفتاح المطور</label>
+        <label for="access-key-input" class="visually-hidden">مفتاح الدخول</label>
         <input
           type="password"
           id="access-key-input"
           dir="ltr"
           autocomplete="current-password"
-          placeholder="أدخل مفتاح المطور (الافتراضي: mover-dev-2024)"
-          class="w-full bg-primary-900 border border-white/20 rounded-xl px-4 py-3 text-sm text-center text-white placeholder-slate-400 focus:border-accent-300"
+          placeholder="أدخل مفتاح الدخول (الافتراضي: mover-dev-2024)"
+          class="w-full bg-slate-950/80 border border-white/15 rounded-xl px-4 py-3.5 text-sm text-center text-white placeholder-slate-400 transition-all duration-200 focus:border-accent-300 focus:ring-2 focus:ring-accent-300/30 outline-none"
           required
         />
         <button
           type="submit"
-          class="w-full bg-accent hover:bg-accent-700 text-white font-bold py-3.5 rounded-xl shadow-md transition-colors min-h-[48px]"
+          class="w-full bg-gradient-to-l from-accent-500 to-accent-600 hover:from-accent-400 hover:to-accent-500 active:scale-[0.98] text-white font-bold py-3.5 rounded-xl shadow-lg shadow-accent-900/30 transition-all duration-200 min-h-[48px]"
         >
           الدخول إلى لوحة التحكم
         </button>
       </form>
-      <div id="auth-error" role="alert" class="hidden text-rose-300 text-xs mt-3 font-semibold">
+      <div id="auth-error" role="alert" class="hidden text-rose-300 text-xs mt-3 font-semibold bg-rose-950/60 border border-rose-500/30 rounded-lg py-2 px-3">
         مفتاح الدخول غير صحيح، يرجى المحاولة مرة أخرى.
       </div>
     </div>
   </div>
 
   <!-- Main Developer Dashboard -->
-  <div id="dashboard" class="hidden min-h-screen flex flex-col">
+  <div id="dashboard" class="hidden min-h-screen w-full max-w-full min-w-0 overflow-x-hidden flex flex-col relative z-10">
     <!-- Top Bar -->
-    <header class="bg-primary-dark border-b border-white/10 px-6 py-4 sticky top-0 z-40">
-      <div class="max-w-7xl mx-auto flex items-center justify-between gap-4">
-        <div class="flex items-center gap-3">
+    <header class="bg-[#071224]/85 backdrop-blur-xl sticky top-0 z-40 w-full max-w-full min-w-0">
+      <div class="max-w-7xl w-full min-w-0 mx-auto px-3.5 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0">
           <img
             src="/logo.jpg"
             alt="شركة الولاء"
             width="44"
             height="44"
-            class="w-11 h-11 rounded-xl bg-white p-1 object-contain shrink-0"
+            class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white p-1 object-contain shrink-0 ring-1 ring-white/20 shadow-md"
           />
-          <div>
-            <div class="font-extrabold text-white text-lg flex items-center gap-2">
+          <div class="min-w-0">
+            <div class="font-extrabold text-white text-base sm:text-lg flex items-center gap-2 flex-wrap">
               <span>شركة الولاء</span>
-              <span class="text-xs bg-primary-800 text-accent-300 border border-white/15 px-2 py-0.5 rounded font-mono font-bold">Admin</span>
+              <span class="text-[10px] sm:text-[11px] bg-accent-500/15 text-accent-300 border border-accent-400/30 px-2 py-0.5 rounded-full font-mono font-bold tracking-wide">ADMIN</span>
             </div>
-            <div class="text-xs text-slate-300">إدارة أرقام التواصل وترتيب وسائط المعرض</div>
+            <div class="text-[11px] sm:text-xs text-slate-300 flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5">
+              <span>لوحة إدارة الموقع والزيارات</span>
+              <span class="text-slate-600 hidden sm:inline">•</span>
+              <span class={`inline-flex items-center gap-1.5 font-semibold ${dbConnected ? 'text-emerald-300' : 'text-amber-300'}`}>
+                <span class="relative flex h-2 w-2">
+                  <span class={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${dbConnected ? 'bg-emerald-400' : 'bg-amber-400'}`}></span>
+                  <span class={`relative inline-flex rounded-full h-2 w-2 ${dbConnected ? 'bg-emerald-400' : 'bg-amber-400'}`}></span>
+                </span>
+                <span>{dbConnected ? 'D1 متصل' : 'وضع محلي بدون D1'}</span>
+              </span>
+            </div>
           </div>
         </div>
 
-        <div class="flex items-center gap-3">
-          <a href="/" target="_blank" class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-200 hover:text-white bg-slate-800 hover:bg-slate-700 px-3.5 py-2.5 rounded-xl transition-colors border border-slate-700 min-h-[40px]">
-            <Eye class="w-4 h-4" aria-hidden="true" />
+        <div class="flex flex-wrap items-center gap-2">
+          <a
+            href="/"
+            target="_blank"
+            class="inline-flex items-center gap-1.5 text-xs font-bold text-slate-200 hover:text-white bg-slate-800/80 hover:bg-slate-700/90 active:scale-[0.98] px-3 sm:px-4 py-2 rounded-xl transition-all duration-200 border border-white/10 min-h-[40px]"
+          >
+            <Eye class="w-4 h-4 text-sky-300" aria-hidden="true" />
             <span>معاينة الموقع</span>
           </a>
-          <button type="button" id="lock-btn" class="text-xs font-bold text-rose-200 hover:text-white bg-rose-900/50 hover:bg-rose-800 px-3.5 py-2.5 rounded-xl border border-rose-700 transition-colors min-h-[40px]">
+          <button
+            type="button"
+            id="lock-btn"
+            class="text-xs font-bold text-rose-200 hover:text-white bg-rose-950/60 hover:bg-rose-800/80 active:scale-[0.98] px-3 sm:px-4 py-2 rounded-xl border border-rose-500/30 transition-all duration-200 min-h-[40px]"
+          >
             قفل اللوحة
           </button>
         </div>
       </div>
+
+      <!-- Gradient Bottom Divider -->
+      <div class="h-px bg-gradient-to-r from-transparent via-accent-400/35 to-transparent"></div>
+
+      <!-- Tab Navigation Bar -->
+      <div class="max-w-7xl w-full min-w-0 mx-auto px-3.5 sm:px-6 lg:px-8 py-3">
+        <nav
+          role="tablist"
+          aria-label="أقسام لوحة التحكم"
+          class="flex flex-wrap sm:flex-nowrap items-center gap-1.5 sm:gap-2 w-full min-w-0 p-1.5 rounded-2xl bg-slate-900/75 backdrop-blur-xl border border-white/10 shadow-lg"
+        >
+          <button
+            type="button"
+            role="tab"
+            id="tab-btn-traffic"
+            data-tab="traffic"
+            aria-selected="true"
+            aria-controls="tab-panel-traffic"
+            class="tab-btn relative flex-1 sm:flex-initial flex items-center justify-center sm:justify-start gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-200 active:scale-[0.98] min-h-[44px]"
+          >
+            <ChartBar class="w-4 h-4 shrink-0" aria-hidden="true" />
+            <span>إحصائيات الزيارات</span>
+          </button>
+
+          <button
+            type="button"
+            role="tab"
+            id="tab-btn-settings"
+            data-tab="settings"
+            aria-selected="false"
+            aria-controls="tab-panel-settings"
+            class="tab-btn relative flex-1 sm:flex-initial flex items-center justify-center sm:justify-start gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-200 active:scale-[0.98] min-h-[44px]"
+          >
+            <Sliders class="w-4 h-4 shrink-0" aria-hidden="true" />
+            <span>إعدادات التواصل</span>
+          </button>
+
+          <button
+            type="button"
+            role="tab"
+            id="tab-btn-media"
+            data-tab="media"
+            aria-selected="false"
+            aria-controls="tab-panel-media"
+            class="tab-btn relative flex-1 sm:flex-initial flex items-center justify-center sm:justify-start gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-200 active:scale-[0.98] min-h-[44px]"
+          >
+            <Images class="w-4 h-4 shrink-0" aria-hidden="true" />
+            <span>إدارة المعرض</span>
+          </button>
+        </nav>
+      </div>
     </header>
 
-    <!-- Main Container -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-      <!-- Live Feedback Region -->
-      <div id="admin-toast" role="status" aria-live="polite" class="hidden rounded-xl bg-emerald-900/90 border border-emerald-600 text-emerald-100 px-4 py-3 text-sm font-semibold flex items-center gap-2">
+    <!-- Floating Toast Notification -->
+    <div
+      id="admin-toast"
+      role="status"
+      aria-live="polite"
+      class="hidden fixed top-20 inset-x-4 mx-auto max-w-lg z-50 rounded-2xl bg-emerald-950/95 backdrop-blur-xl border border-emerald-500/40 text-emerald-100 px-4 py-3.5 text-sm font-semibold shadow-2xl overflow-hidden"
+    >
+      <div class="flex items-center gap-2.5">
         <CheckCircle class="w-4 h-4 text-emerald-300 shrink-0" aria-hidden="true" />
-        <span id="admin-toast-text"></span>
+        <span id="admin-toast-text" class="flex-1"></span>
+      </div>
+      <div id="admin-toast-bar" class="toast-progress-bar absolute inset-x-0 bottom-0 h-0.5 bg-emerald-400"></div>
+    </div>
+
+    <!-- Main Container -->
+    <main class="flex-1 max-w-7xl w-full min-w-0 mx-auto px-3.5 sm:px-6 lg:px-8 py-5 sm:py-8">
+
+      <!-- ========================================================= -->
+      <!-- TAB 1: TRAFFIC ANALYTICS                                  -->
+      <!-- ========================================================= -->
+      <div
+        id="tab-panel-traffic"
+        role="tabpanel"
+        aria-labelledby="tab-btn-traffic"
+        data-tab-panel="traffic"
+        class="space-y-6 tab-panel-animate min-w-0"
+      >
+        <!-- Traffic Toolbar -->
+        <section class="bg-slate-900/65 backdrop-blur-md border border-white/10 rounded-2xl p-4 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 relative overflow-hidden min-w-0">
+          <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-400/40 to-transparent"></div>
+          <div class="flex items-start gap-3 min-w-0">
+            <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-gradient-to-br from-sky-500/20 to-indigo-500/10 border border-sky-400/25 text-sky-300 flex items-center justify-center shrink-0">
+              <Activity class="w-5 h-5" aria-hidden="true" />
+            </div>
+            <div class="min-w-0">
+              <h2 class="text-base sm:text-lg font-extrabold text-white">حركة الزيارات والمدن</h2>
+              <p class="text-xs text-slate-300 mt-1">
+                تتبع عدد الزيارات اليومية وتوزيع الزوار حسب المدن والصفحات الأكثر زيارة
+              </p>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-2.5 w-full md:w-auto">
+            <div class="flex flex-wrap items-center gap-1 p-1 rounded-xl bg-slate-950/80 border border-white/10 w-full sm:w-auto justify-between sm:justify-start" role="group" aria-label="الفترة الزمنية">
+              <button type="button" data-range="today" class="range-btn flex-1 sm:flex-initial px-2.5 sm:px-3 py-2 rounded-lg text-xs font-bold transition-all duration-200 min-h-[38px] text-slate-300 hover:text-white">اليوم</button>
+              <button type="button" data-range="7d" class="range-btn flex-1 sm:flex-initial px-2.5 sm:px-3 py-2 rounded-lg text-xs font-bold transition-all duration-200 min-h-[38px] bg-accent-500/20 text-accent-200 border border-accent-400/30">7 أيام</button>
+              <button type="button" data-range="30d" class="range-btn flex-1 sm:flex-initial px-2.5 sm:px-3 py-2 rounded-lg text-xs font-bold transition-all duration-200 min-h-[38px] text-slate-300 hover:text-white">30 يوماً</button>
+              <button type="button" data-range="all" class="range-btn flex-1 sm:flex-initial px-2.5 sm:px-3 py-2 rounded-lg text-xs font-bold transition-all duration-200 min-h-[38px] text-slate-300 hover:text-white">الكل</button>
+            </div>
+
+            <button
+              type="button"
+              id="refresh-traffic-btn"
+              class="inline-flex items-center justify-center gap-1.5 bg-slate-800/90 hover:bg-slate-700 active:scale-[0.98] text-slate-100 text-xs font-bold px-3.5 py-2.5 rounded-xl border border-white/10 transition-all duration-200 min-h-[42px] w-full sm:w-auto"
+            >
+              <RefreshCw id="refresh-traffic-icon" class="w-3.5 h-3.5 text-sky-300" aria-hidden="true" />
+              <span>تحديث</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- Summary KPI Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div class="bg-slate-900/70 border border-white/10 rounded-2xl p-5 hover:-translate-y-0.5 hover:shadow-elevated hover:border-sky-400/30 transition-all duration-200 relative overflow-hidden">
+            <div class="absolute -bottom-6 -end-6 w-24 h-24 rounded-full bg-sky-500/10 blur-2xl"></div>
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-300">إجمالي الزيارات</span>
+              <span class="w-8 h-8 rounded-lg bg-sky-500/15 text-sky-300 flex items-center justify-center border border-sky-400/20">
+                <TrendingUp class="w-4 h-4" aria-hidden="true" />
+              </span>
+            </div>
+            <div id="traffic-total" class="text-3xl font-extrabold text-white mt-3 tabular-nums">0</div>
+            <div id="traffic-range-label" class="text-[11px] text-slate-400 mt-1">خلال آخر 7 أيام</div>
+          </div>
+
+          <div class="bg-slate-900/70 border border-white/10 rounded-2xl p-5 hover:-translate-y-0.5 hover:shadow-elevated hover:border-emerald-400/30 transition-all duration-200 relative overflow-hidden">
+            <div class="absolute -bottom-6 -end-6 w-24 h-24 rounded-full bg-emerald-500/10 blur-2xl"></div>
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-300">زيارات اليوم</span>
+              <span class="w-8 h-8 rounded-lg bg-emerald-500/15 text-emerald-300 flex items-center justify-center border border-emerald-400/20">
+                <Calendar class="w-4 h-4" aria-hidden="true" />
+              </span>
+            </div>
+            <div id="traffic-today" class="text-3xl font-extrabold text-emerald-300 mt-3 tabular-nums">0</div>
+            <div class="text-[11px] text-slate-400 mt-1">بتوقيت الخادم العالمي (UTC)</div>
+          </div>
+
+          <div class="bg-slate-900/70 border border-white/10 rounded-2xl p-5 hover:-translate-y-0.5 hover:shadow-elevated hover:border-amber-400/30 transition-all duration-200 relative overflow-hidden">
+            <div class="absolute -bottom-6 -end-6 w-24 h-24 rounded-full bg-amber-500/10 blur-2xl"></div>
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-300">المدن المسجلة</span>
+              <span class="w-8 h-8 rounded-lg bg-amber-500/15 text-amber-300 flex items-center justify-center border border-amber-400/20">
+                <Globe class="w-4 h-4" aria-hidden="true" />
+              </span>
+            </div>
+            <div id="traffic-cities-count" class="text-3xl font-extrabold text-amber-300 mt-3 tabular-nums">0</div>
+            <div class="text-[11px] text-slate-400 mt-1">مدينة مختلفة حسب الموقع الجغرافي</div>
+          </div>
+
+          <div class="bg-slate-900/70 border border-white/10 rounded-2xl p-5 hover:-translate-y-0.5 hover:shadow-elevated hover:border-violet-400/30 transition-all duration-200 relative overflow-hidden">
+            <div class="absolute -bottom-6 -end-6 w-24 h-24 rounded-full bg-violet-500/10 blur-2xl"></div>
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-300">المدينة الأكثر زيارة</span>
+              <span class="w-8 h-8 rounded-lg bg-violet-500/15 text-violet-300 flex items-center justify-center border border-violet-400/20">
+                <MapPin class="w-4 h-4" aria-hidden="true" />
+              </span>
+            </div>
+            <div id="traffic-top-city" class="text-xl font-extrabold text-white mt-3 truncate">—</div>
+            <div id="traffic-top-city-visits" class="text-[11px] text-slate-400 mt-1">لا توجد بيانات بعد</div>
+          </div>
+        </div>
+
+        <!-- Daily Visits Chart -->
+        <section class="bg-slate-900/65 border border-white/10 rounded-2xl p-5 sm:p-6">
+          <div class="flex items-center justify-between gap-4 pb-4 mb-5 border-b border-white/10">
+            <div>
+              <h3 class="text-base font-extrabold text-white flex items-center gap-2">
+                <ChartBar class="w-4 h-4 text-accent-300" aria-hidden="true" />
+                <span>الزيارات اليومية</span>
+              </h3>
+              <p class="text-xs text-slate-400 mt-0.5">توزيع عدد الزيارات على مدار الأيام المختارة</p>
+            </div>
+            <span id="traffic-chart-peak" class="text-xs font-mono text-slate-300 bg-slate-950/70 border border-white/10 px-3 py-1.5 rounded-lg">أعلى يوم: 0</span>
+          </div>
+
+          <div id="traffic-daily-chart" class="space-y-3">
+            <div class="py-10 text-center text-xs text-slate-400">جاري تحميل بيانات الزيارات...</div>
+          </div>
+        </section>
+
+        <!-- Cities Breakdown & Top Pages -->
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+          <!-- Cities Breakdown (3 cols) -->
+          <section class="lg:col-span-3 min-w-0 bg-slate-900/65 border border-white/10 rounded-2xl p-4 sm:p-6">
+            <div class="flex items-center justify-between gap-4 pb-4 mb-5 border-b border-white/10">
+              <div class="min-w-0">
+                <h3 class="text-base font-extrabold text-white flex items-center gap-2">
+                  <MapPin class="w-4 h-4 text-amber-300 shrink-0" aria-hidden="true" />
+                  <span>توزيع الزيارات حسب المدن</span>
+                </h3>
+                <p class="text-xs text-slate-400 mt-0.5">يتم التعرف على المدينة تلقائياً عبر شبكة Cloudflare عند النشر</p>
+              </div>
+            </div>
+
+            <div id="traffic-cities-list" class="space-y-3">
+              <div class="py-8 text-center text-xs text-slate-400">جاري تحميل قائمة المدن...</div>
+            </div>
+          </section>
+
+          <!-- Top Pages (2 cols) -->
+          <section class="lg:col-span-2 min-w-0 bg-slate-900/65 border border-white/10 rounded-2xl p-4 sm:p-6">
+            <div class="flex items-center justify-between gap-4 pb-4 mb-5 border-b border-white/10">
+              <div>
+                <h3 class="text-base font-extrabold text-white flex items-center gap-2">
+                  <Globe class="w-4 h-4 text-emerald-300" aria-hidden="true" />
+                  <span>الصفحات الأكثر زيارة</span>
+                </h3>
+                <p class="text-xs text-slate-400 mt-0.5">مسارات الموقع التي استقبلت أكبر عدد من الزوار</p>
+              </div>
+            </div>
+
+            <div id="traffic-pages-list" class="space-y-3">
+              <div class="py-8 text-center text-xs text-slate-400">جاري تحميل قائمة الصفحات...</div>
+            </div>
+          </section>
+        </div>
       </div>
 
-      <!-- Section 1: Contact Settings -->
-      <section class="bg-slate-950 border border-slate-800 rounded-2xl p-6 sm:p-8">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-6 mb-6 border-b border-slate-800 gap-4">
-          <div>
+      <!-- ========================================================= -->
+      <!-- TAB 2: CONTACT & SOCIAL SETTINGS                          -->
+      <!-- ========================================================= -->
+      <div
+        id="tab-panel-settings"
+        role="tabpanel"
+        aria-labelledby="tab-btn-settings"
+        data-tab-panel="settings"
+        class="hidden space-y-6 tab-panel-animate"
+      >
+        <section class="bg-slate-900/65 backdrop-blur-md border border-white/10 rounded-2xl p-6 sm:p-8 relative overflow-hidden">
+          <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent-400/40 to-transparent"></div>
+          <div class="pb-6 mb-6 border-b border-white/10">
             <h2 class="text-lg font-extrabold text-white flex items-center gap-2.5">
               <Sliders class="w-5 h-5 text-accent-300" aria-hidden="true" />
               <span>إدارة أرقام التواصل وحسابات السوشيال</span>
             </h2>
             <p class="text-xs text-slate-300 mt-1">تعديل أرقام الهاتف والواتساب في الشريط العلوي، والتحكم في ظهور الشريط العلوي وروابط حسابات التواصل الاجتماعي</p>
           </div>
-          <div class="flex items-center gap-2">
-            <button type="button" id="copy-settings-json" class="inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl transition-colors border border-slate-700 min-h-[40px]">
-              <Copy class="w-3.5 h-3.5 text-emerald-300" aria-hidden="true" />
-              <span>نسخ settings.json</span>
-            </button>
-            <button type="button" id="download-settings-json" class="inline-flex items-center gap-1.5 bg-whatsapp hover:bg-whatsapp-hover text-white text-xs font-bold px-3.5 py-2.5 rounded-xl transition-colors min-h-[40px]">
-              <Download class="w-3.5 h-3.5" aria-hidden="true" />
-              <span>تحميل settings.json</span>
-            </button>
-          </div>
-        </div>
 
-        <form id="settings-form" class="space-y-4">
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div>
-              <label for="setting-whatsapp" class="text-xs font-bold text-slate-200 mb-1.5 flex items-center gap-1.5">
-                <MessageCircle class="w-4 h-4 text-emerald-300" aria-hidden="true" />
-                <span>رقم الواتساب (wa.me) *</span>
-              </label>
-              <input
-                type="text"
-                id="setting-whatsapp"
-                dir="ltr"
-                placeholder="201000000000"
-                class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-3 text-sm font-mono text-white placeholder-slate-400 focus:border-accent-300"
-                required
-              />
-              <span class="text-[11px] text-slate-400 mt-1 block">بدون علامة + أو مسافات</span>
-            </div>
-
-            <div>
-              <label for="setting-phone" class="text-xs font-bold text-slate-200 mb-1.5 flex items-center gap-1.5">
-                <Phone class="w-4 h-4 text-accent-300" aria-hidden="true" />
-                <span>رقم الاتصال المباشر (tel:) *</span>
-              </label>
-              <input
-                type="text"
-                id="setting-phone"
-                dir="ltr"
-                placeholder="201000000000"
-                class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-3 text-sm font-mono text-white placeholder-slate-400 focus:border-accent-300"
-                required
-              />
-              <span class="text-[11px] text-slate-400 mt-1 block">الرقم الفعلي للاتصال</span>
-            </div>
-
-            <div>
-              <label for="setting-display-phone" class="text-xs font-bold text-slate-200 mb-1.5 flex items-center gap-1.5">
-                <Phone class="w-4 h-4 text-sky-300" aria-hidden="true" />
-                <span>الرقم الظاهر للعميل *</span>
-              </label>
-              <input
-                type="text"
-                id="setting-display-phone"
-                dir="ltr"
-                placeholder="+20 100 000 0000"
-                class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-3 text-sm font-mono text-white placeholder-slate-400 focus:border-accent-300"
-                required
-              />
-              <span class="text-[11px] text-slate-400 mt-1 block">النص المنسق على الأزرار</span>
-            </div>
-
-            <div>
-              <label for="setting-hours" class="text-xs font-bold text-slate-200 mb-1.5 flex items-center gap-1.5">
-                <Clock class="w-4 h-4 text-amber-300" aria-hidden="true" />
-                <span>ساعات العمل *</span>
-              </label>
-              <input
-                type="text"
-                id="setting-hours"
-                placeholder="خدمة عملاء 24 ساعة / 7 أيام"
-                class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-3 text-sm text-white placeholder-slate-400 focus:border-accent-300"
-                required
-              />
-              <span class="text-[11px] text-slate-400 mt-1 block">تظهر في الشريط العلوي والفوتر</span>
-            </div>
-          </div>
-
-          <fieldset class="border border-slate-800 bg-slate-900/50 rounded-xl p-4 sm:p-5 space-y-4">
-            <legend class="px-2 text-xs font-extrabold text-accent-300">حسابات التواصل الاجتماعي والشريط العلوي</legend>
-            <div class="flex flex-wrap items-center justify-between gap-4 pb-2 border-b border-slate-800">
-              <label for="setting-topbar-enabled" class="inline-flex items-center gap-2.5 text-xs font-bold text-slate-200 cursor-pointer min-h-[36px]">
-                <input
-                  type="checkbox"
-                  id="setting-topbar-enabled"
-                  class="w-4 h-4 rounded border-slate-600 bg-slate-900 text-accent focus:ring-accent-300"
-                />
-                <span>إظهار الشريط العلوي (أرقام التواصل وأيقونات السوشيال)</span>
-              </label>
-            </div>
+          <form id="settings-form" class="space-y-5">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {SOCIAL_PLATFORMS.map((platform) => (
-                <div>
-                  <label for={`setting-social-${platform.key}`} class="text-xs font-bold text-slate-200 mb-1.5 block">
-                    {platform.label}
-                  </label>
+              <div>
+                <label for="setting-whatsapp" class="text-xs font-bold text-slate-200 mb-1.5 flex items-center gap-1.5">
+                  <MessageCircle class="w-4 h-4 text-emerald-300" aria-hidden="true" />
+                  <span>رقم الواتساب (wa.me) *</span>
+                </label>
+                <input
+                  type="text"
+                  id="setting-whatsapp"
+                  dir="ltr"
+                  placeholder="201000000000"
+                  class="w-full bg-slate-950/80 border border-white/15 rounded-xl px-3.5 py-3 text-sm font-mono text-white placeholder-slate-400 transition-all duration-200 focus:border-accent-300 focus:ring-2 focus:ring-accent-300/30 outline-none"
+                  required
+                />
+                <span class="text-[11px] text-slate-400 mt-1 block">بدون علامة + أو مسافات</span>
+              </div>
+
+              <div>
+                <label for="setting-phone" class="text-xs font-bold text-slate-200 mb-1.5 flex items-center gap-1.5">
+                  <Phone class="w-4 h-4 text-accent-300" aria-hidden="true" />
+                  <span>رقم الاتصال المباشر (tel:) *</span>
+                </label>
+                <input
+                  type="text"
+                  id="setting-phone"
+                  dir="ltr"
+                  placeholder="201000000000"
+                  class="w-full bg-slate-950/80 border border-white/15 rounded-xl px-3.5 py-3 text-sm font-mono text-white placeholder-slate-400 transition-all duration-200 focus:border-accent-300 focus:ring-2 focus:ring-accent-300/30 outline-none"
+                  required
+                />
+                <span class="text-[11px] text-slate-400 mt-1 block">الرقم الفعلي للاتصال</span>
+              </div>
+
+              <div>
+                <label for="setting-display-phone" class="text-xs font-bold text-slate-200 mb-1.5 flex items-center gap-1.5">
+                  <Phone class="w-4 h-4 text-sky-300" aria-hidden="true" />
+                  <span>الرقم الظاهر للعميل *</span>
+                </label>
+                <input
+                  type="text"
+                  id="setting-display-phone"
+                  dir="ltr"
+                  placeholder="+20 100 000 0000"
+                  class="w-full bg-slate-950/80 border border-white/15 rounded-xl px-3.5 py-3 text-sm font-mono text-white placeholder-slate-400 transition-all duration-200 focus:border-accent-300 focus:ring-2 focus:ring-accent-300/30 outline-none"
+                  required
+                />
+                <span class="text-[11px] text-slate-400 mt-1 block">النص المنسق على الأزرار</span>
+              </div>
+
+              <div>
+                <label for="setting-hours" class="text-xs font-bold text-slate-200 mb-1.5 flex items-center gap-1.5">
+                  <Clock class="w-4 h-4 text-amber-300" aria-hidden="true" />
+                  <span>ساعات العمل *</span>
+                </label>
+                <input
+                  type="text"
+                  id="setting-hours"
+                  placeholder="خدمة عملاء 24 ساعة / 7 أيام"
+                  class="w-full bg-slate-950/80 border border-white/15 rounded-xl px-3.5 py-3 text-sm text-white placeholder-slate-400 transition-all duration-200 focus:border-accent-300 focus:ring-2 focus:ring-accent-300/30 outline-none"
+                  required
+                />
+                <span class="text-[11px] text-slate-400 mt-1 block">تظهر في الشريط العلوي والفوتر</span>
+              </div>
+            </div>
+
+            <fieldset class="border border-white/10 bg-slate-950/45 rounded-xl p-4 sm:p-5 space-y-4">
+              <legend class="px-2.5 text-xs font-extrabold text-accent-300">حسابات التواصل الاجتماعي والشريط العلوي</legend>
+              <div class="flex flex-wrap items-center justify-between gap-4 pb-3 border-b border-white/10">
+                <label for="setting-topbar-enabled" class="inline-flex items-center gap-2.5 text-xs font-bold text-slate-200 cursor-pointer min-h-[36px]">
                   <input
-                    type="url"
-                    id={`setting-social-${platform.key}`}
-                    dir="ltr"
-                    placeholder={`https://www.${platform.key}.com/...`}
-                    class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-3 text-sm font-mono text-white placeholder-slate-400 focus:border-accent-300"
+                    type="checkbox"
+                    id="setting-topbar-enabled"
+                    class="w-4 h-4 rounded border-slate-600 bg-slate-900 text-accent focus:ring-accent-300"
                   />
-                </div>
-              ))}
-            </div>
-            <p class="text-[11px] text-slate-400">اترك الحقل فارغاً لإخفاء أيقونة الحساب من الموقع، أو أدخل رابط https كامل لإظهارها.</p>
-          </fieldset>
+                  <span>إظهار الشريط العلوي (أرقام التواصل وأيقونات السوشيال)</span>
+                </label>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                {SOCIAL_PLATFORMS.map((platform) => (
+                  <div>
+                    <label for={`setting-social-${platform.key}`} class="text-xs font-bold text-slate-200 mb-1.5 block">
+                      {platform.label}
+                    </label>
+                    <input
+                      type="url"
+                      id={`setting-social-${platform.key}`}
+                      dir="ltr"
+                      placeholder={`https://www.${platform.key}.com/...`}
+                      class="w-full bg-slate-950/80 border border-white/15 rounded-xl px-3.5 py-3 text-sm font-mono text-white placeholder-slate-400 transition-all duration-200 focus:border-accent-300 focus:ring-2 focus:ring-accent-300/30 outline-none"
+                    />
+                  </div>
+                ))}
+              </div>
+              <p class="text-[11px] text-slate-400">اترك الحقل فارغاً لإخفاء أيقونة الحساب من الموقع، أو أدخل رابط https كامل لإظهارها.</p>
+            </fieldset>
 
-          <div class="flex flex-wrap items-center justify-between gap-4 pt-2">
-            <div id="settings-status" role="status" class="text-xs font-bold text-emerald-300 hidden flex items-center gap-1.5">
-              <CheckCircle class="w-4 h-4" aria-hidden="true" />
-              <span>تم حفظ وتحديث الإعدادات بنجاح.</span>
-            </div>
-            <button
-              type="submit"
-              class="inline-flex items-center gap-2 bg-accent-400 hover:bg-accent-300 text-primary-900 font-extrabold px-6 py-3 rounded-xl shadow-md transition-colors text-sm ms-auto min-h-[44px]"
-            >
-              <Save class="w-4 h-4" aria-hidden="true" />
-              <span>حفظ وتطبيق الإعدادات</span>
-            </button>
-          </div>
-        </form>
-      </section>
-
-      <!-- Media Guide & Export -->
-      <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div class="flex items-start gap-3">
-          <div class="w-9 h-9 rounded-xl bg-sky-900/50 text-sky-300 flex items-center justify-center shrink-0 mt-0.5">
-            <ShieldAlert class="w-5 h-5" aria-hidden="true" />
-          </div>
-          <div>
-            <h2 class="text-sm font-bold text-white">إدارة وسائط المعرض</h2>
-            <p class="text-xs text-slate-300 mt-1 leading-relaxed">
-              استخدم أزرار التقديم والتأخير لتغيير ترتيب العرض، أو احذف وأضف وسائط جديدة مع المعاينة الفورية.
-            </p>
-          </div>
-        </div>
-        <div class="flex items-center gap-2 shrink-0">
-          <button type="button" id="copy-json-btn" class="inline-flex items-center gap-1.5 bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl transition-colors min-h-[40px]">
-            <Copy class="w-4 h-4 text-emerald-300" aria-hidden="true" />
-            <span>نسخ media.json</span>
-          </button>
-          <button type="button" id="download-json-btn" class="inline-flex items-center gap-1.5 bg-whatsapp hover:bg-whatsapp-hover text-white text-xs font-bold px-3.5 py-2.5 rounded-xl transition-colors min-h-[40px]">
-            <Download class="w-4 h-4" aria-hidden="true" />
-            <span>تحميل media.json</span>
-          </button>
-        </div>
-      </div>
-
-      <!-- Live Statistics -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-5">
-          <div class="text-xs font-bold text-slate-300">إجمالي العناصر</div>
-          <div id="stat-total" class="text-3xl font-extrabold text-white mt-1 tabular-nums">0</div>
-        </div>
-        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-5">
-          <div class="text-xs font-bold text-slate-300">الصور الفوتوغرافية</div>
-          <div id="stat-images" class="text-3xl font-extrabold text-sky-300 mt-1 tabular-nums">0</div>
-        </div>
-        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-5">
-          <div class="text-xs font-bold text-slate-300">مقاطع الفيديو</div>
-          <div id="stat-videos" class="text-3xl font-extrabold text-rose-300 mt-1 tabular-nums">0</div>
-        </div>
-        <div class="bg-slate-950 border border-slate-800 rounded-2xl p-5">
-          <div class="text-xs font-bold text-slate-300">حالة قاعدة البيانات</div>
-          <div id="db-status-badge" class={`text-sm font-bold mt-2 flex items-center gap-1.5 ${dbConnected ? 'text-emerald-300' : 'text-amber-300'}`}>
-            <CheckCircle class="w-4 h-4" aria-hidden="true" />
-            <span>{dbConnected ? 'متصل بـ Cloudflare D1' : 'بانتظار ربط D1'}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Add New Media Form -->
-      <section class="bg-slate-950 border border-slate-800 rounded-2xl p-6 sm:p-8">
-        <div class="mb-6 pb-4 border-b border-slate-800">
-          <h2 class="text-lg font-extrabold text-white flex items-center gap-2">
-            <Plus class="w-5 h-5 text-accent-300" aria-hidden="true" />
-            <span>إضافة صورة أو فيديو جديد للمعرض</span>
-          </h2>
-          <p class="text-xs text-slate-300 mt-1">أدخل بيانات الوسيط لإدراجه في المعرض</p>
-        </div>
-
-        <form id="add-media-form" class="space-y-5">
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-              <label for="item-type" class="block text-xs font-bold text-slate-200 mb-1.5">نوع الوسيط *</label>
-              <select id="item-type" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-3 text-sm font-medium text-white focus:border-accent-300">
-                <option value="image">صورة (رفع من الجهاز)</option>
-                <option value="video">فيديو (YouTube)</option>
-              </select>
-            </div>
-
-            <div>
-              <label for="item-category" class="block text-xs font-bold text-slate-200 mb-1.5">التصنيف *</label>
-              <select id="item-category" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-3 text-sm font-medium text-white focus:border-accent-300">
-                <option value="moving">سيارات وأوناش النقل</option>
-                <option value="packing">التغليف المبطن والحراري</option>
-                <option value="team">فريق العمل والفك والتركيب</option>
-                <option value="storage">مستودعات الأمان</option>
-              </select>
-            </div>
-
-            <div id="photo-upload-wrap">
-              <label for="item-file" class="block text-xs font-bold text-slate-200 mb-1.5">رفع الصورة من جهازك *</label>
-              <label
-                for="item-file"
-                class="flex items-center justify-between gap-3 bg-slate-900 hover:bg-slate-800/80 border border-dashed border-accent-400/50 rounded-xl px-3.5 py-2.5 cursor-pointer transition-colors min-h-[46px]"
+            <div class="flex flex-wrap items-center justify-between gap-4 pt-2">
+              <div id="settings-status" role="status" class="text-xs font-bold text-emerald-300 hidden flex items-center gap-1.5">
+                <CheckCircle class="w-4 h-4" aria-hidden="true" />
+                <span>تم حفظ وتحديث الإعدادات بنجاح.</span>
+              </div>
+              <button
+                type="submit"
+                class="inline-flex items-center gap-2 bg-gradient-to-l from-accent-400 to-accent-500 hover:from-accent-300 hover:to-accent-400 active:scale-[0.98] text-primary-900 font-extrabold px-6 py-3 rounded-xl shadow-lg shadow-accent-950/30 transition-all duration-200 text-sm ms-auto min-h-[46px]"
               >
-                <span id="item-file-label" class="text-xs font-semibold text-slate-200 truncate">اختر صورة من الهاتف أو الكمبيوتر...</span>
-                <span class="text-xs font-bold bg-accent-400 text-primary-900 px-2.5 py-1 rounded-lg shrink-0">اختيار</span>
-              </label>
-              <input type="file" id="item-file" accept="image/*" class="sr-only" />
+                <Save class="w-4 h-4" aria-hidden="true" />
+                <span>حفظ وتطبيق الإعدادات</span>
+              </button>
             </div>
+          </form>
+        </section>
+      </div>
 
-            <div id="video-url-wrap" class="hidden">
-              <label for="item-src" class="block text-xs font-bold text-slate-200 mb-1.5">رابط فيديو يوتيوب *</label>
-              <input
-                type="text"
-                id="item-src"
-                dir="ltr"
-                placeholder="https://www.youtube.com/watch?v=..."
-                class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-3 text-sm font-medium text-white placeholder-slate-400 focus:border-accent-300"
-              />
+      <!-- ========================================================= -->
+      <!-- TAB 3: MEDIA GALLERY MANAGEMENT                           -->
+      <!-- ========================================================= -->
+      <div
+        id="tab-panel-media"
+        role="tabpanel"
+        aria-labelledby="tab-btn-media"
+        data-tab-panel="media"
+        class="hidden space-y-6 tab-panel-animate"
+      >
+        <!-- Media Guide & Export -->
+        <div class="bg-slate-900/70 border border-white/10 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-xl bg-sky-500/15 border border-sky-400/25 text-sky-300 flex items-center justify-center shrink-0 mt-0.5">
+              <ShieldAlert class="w-5 h-5" aria-hidden="true" />
             </div>
-          </div>
-
-          <div id="item-preview-wrap" class="hidden flex items-center gap-4 bg-slate-900/70 border border-slate-800 rounded-xl p-3">
-            <img id="item-preview-img" src="" alt="معاينة الصورة" class="w-24 h-16 object-cover rounded-lg border border-slate-700 shrink-0" />
-            <div class="min-w-0 text-xs">
-              <div id="item-preview-meta" class="font-bold text-emerald-300">جاهزة للرفع</div>
-              <div class="text-slate-400 mt-0.5">يتم ضغط الصورة تلقائياً بصيغة WebP لتسريع الموقع</div>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label for="item-title" class="block text-xs font-bold text-slate-200 mb-1.5">العنوان بالعربية *</label>
-              <input
-                type="text"
-                id="item-title"
-                placeholder="مثال: نقل عفش فيلا بالتجمع الخامس"
-                class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-3 text-sm font-medium text-white placeholder-slate-400 focus:border-accent-300"
-                required
-              />
-            </div>
-
-            <div>
-              <label for="item-title-en" class="block text-xs font-bold text-slate-200 mb-1.5">العنوان بالإنجليزية (اختياري)</label>
-              <input
-                type="text"
-                id="item-title-en"
-                dir="ltr"
-                placeholder="e.g. Villa Relocation in New Cairo"
-                class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-3 text-sm font-medium text-white placeholder-slate-400 focus:border-accent-300"
-              />
+              <h2 class="text-sm font-bold text-white">إدارة وسائط المعرض</h2>
+              <p class="text-xs text-slate-300 mt-1 leading-relaxed">
+                استخدم أزرار التقديم والتأخير لتغيير ترتيب العرض، أو احذف وأضف وسائط جديدة مع المعاينة الفورية.
+              </p>
             </div>
           </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label for="item-desc" class="block text-xs font-bold text-slate-200 mb-1.5">الوصف بالعربية *</label>
-              <input
-                type="text"
-                id="item-desc"
-                placeholder="تفاصيل مختصرة عن العملية والمعدات المستخدمة"
-                class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-3 text-sm font-medium text-white placeholder-slate-400 focus:border-accent-300"
-                required
-              />
-            </div>
-
-            <div id="video-thumb-wrap" class="hidden">
-              <label for="item-thumb-file" class="block text-xs font-bold text-slate-200 mb-1.5">صورة مصغرة للفيديو (اختياري)</label>
-              <input
-                type="file"
-                id="item-thumb-file"
-                accept="image/*"
-                class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-200 file:me-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-slate-800 file:text-white file:font-bold"
-              />
-            </div>
-          </div>
-
-          <div class="flex justify-end pt-2">
-            <button
-              type="submit"
-              id="add-media-submit"
-              class="inline-flex items-center gap-2 bg-accent hover:bg-accent-700 text-white font-bold px-7 py-3.5 rounded-xl shadow-md transition-colors min-h-[48px]"
-            >
-              <Plus class="w-5 h-5" aria-hidden="true" />
-              <span>إضافة إلى المعرض</span>
+          <div class="flex flex-wrap items-center gap-2 shrink-0">
+            <button type="button" id="copy-json-btn" class="inline-flex items-center gap-1.5 bg-slate-800/90 hover:bg-slate-700 active:scale-[0.98] text-white text-xs font-bold px-3.5 py-2.5 rounded-xl border border-white/10 transition-all duration-200 min-h-[42px]">
+              <Copy class="w-4 h-4 text-emerald-300" aria-hidden="true" />
+              <span>نسخ media.json</span>
+            </button>
+            <button type="button" id="download-json-btn" class="inline-flex items-center gap-1.5 bg-whatsapp hover:bg-whatsapp-hover active:scale-[0.98] text-white text-xs font-bold px-3.5 py-2.5 rounded-xl transition-all duration-200 min-h-[42px]">
+              <Download class="w-4 h-4" aria-hidden="true" />
+              <span>تحميل media.json</span>
             </button>
           </div>
-        </form>
-
-        <!-- Hidden single file picker used by "تغيير الصورة" buttons on existing items -->
-        <input type="file" id="replace-photo-input" accept="image/*" class="sr-only" />
-      </section>
-
-      <!-- Current Media Catalog -->
-      <section class="bg-slate-950 border border-slate-800 rounded-2xl p-6 sm:p-8">
-        <div class="flex flex-wrap items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-800">
-          <div>
-            <h2 class="text-lg font-extrabold text-white">ترتيب وسائط المعرض الحالية</h2>
-            <p class="text-xs text-slate-300 mt-1">استخدم أزرار التقديم والتأخير لتغيير الترتيب، أو احذف أي عنصر</p>
-          </div>
-          <button type="button" id="reset-default-btn" class="text-xs font-bold text-slate-200 hover:text-white bg-slate-800 hover:bg-slate-700 px-3.5 py-2 rounded-xl border border-slate-700 transition-colors min-h-[38px]">
-            استعادة القائمة الأصلية
-          </button>
         </div>
 
-        <div id="media-table-container" class="space-y-3"></div>
-      </section>
+        <!-- Live Statistics -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div class="bg-slate-900/70 border border-white/10 rounded-2xl p-5 hover:-translate-y-0.5 hover:shadow-elevated transition-all duration-200 relative overflow-hidden">
+            <div class="absolute -bottom-6 -end-6 w-20 h-20 rounded-full bg-white/5 blur-xl"></div>
+            <div class="text-xs font-bold text-slate-300">إجمالي العناصر</div>
+            <div id="stat-total" class="text-3xl font-extrabold text-white mt-2 tabular-nums">0</div>
+          </div>
+          <div class="bg-slate-900/70 border border-white/10 rounded-2xl p-5 hover:-translate-y-0.5 hover:shadow-elevated hover:border-sky-400/30 transition-all duration-200 relative overflow-hidden">
+            <div class="absolute -bottom-6 -end-6 w-20 h-20 rounded-full bg-sky-500/15 blur-xl"></div>
+            <div class="text-xs font-bold text-slate-300">الصور الفوتوغرافية</div>
+            <div id="stat-images" class="text-3xl font-extrabold text-sky-300 mt-2 tabular-nums">0</div>
+          </div>
+          <div class="bg-slate-900/70 border border-white/10 rounded-2xl p-5 hover:-translate-y-0.5 hover:shadow-elevated hover:border-rose-400/30 transition-all duration-200 relative overflow-hidden">
+            <div class="absolute -bottom-6 -end-6 w-20 h-20 rounded-full bg-rose-500/15 blur-xl"></div>
+            <div class="text-xs font-bold text-slate-300">مقاطع الفيديو</div>
+            <div id="stat-videos" class="text-3xl font-extrabold text-rose-300 mt-2 tabular-nums">0</div>
+          </div>
+          <div class="bg-slate-900/70 border border-white/10 rounded-2xl p-5 hover:-translate-y-0.5 hover:shadow-elevated hover:border-emerald-400/30 transition-all duration-200 relative overflow-hidden">
+            <div class="absolute -bottom-6 -end-6 w-20 h-20 rounded-full bg-emerald-500/15 blur-xl"></div>
+            <div class="text-xs font-bold text-slate-300 flex items-center gap-1.5">
+              <Database class="w-3.5 h-3.5 text-slate-400" aria-hidden="true" />
+              <span>حالة قاعدة البيانات</span>
+            </div>
+            <div id="db-status-badge" class={`text-sm font-bold mt-3 flex items-center gap-1.5 ${dbConnected ? 'text-emerald-300' : 'text-amber-300'}`}>
+              <CheckCircle class="w-4 h-4 shrink-0" aria-hidden="true" />
+              <span>{dbConnected ? 'متصل بـ Cloudflare D1' : 'بانتظار ربط D1'}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add New Media Form -->
+        <section class="bg-slate-900/65 backdrop-blur-md border border-white/10 rounded-2xl p-6 sm:p-8 relative overflow-hidden">
+          <div class="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent-400/40 to-transparent"></div>
+          <div class="mb-6 pb-4 border-b border-white/10">
+            <h2 class="text-lg font-extrabold text-white flex items-center gap-2">
+              <Plus class="w-5 h-5 text-accent-300" aria-hidden="true" />
+              <span>إضافة صورة أو فيديو جديد للمعرض</span>
+            </h2>
+            <p class="text-xs text-slate-300 mt-1">أدخل بيانات الوسيط لإدراجه في المعرض</p>
+          </div>
+
+          <form id="add-media-form" class="space-y-5">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label for="item-type" class="block text-xs font-bold text-slate-200 mb-1.5">نوع الوسيط *</label>
+                <select id="item-type" class="w-full bg-slate-950/80 border border-white/15 rounded-xl px-3.5 py-3 text-sm font-medium text-white transition-all duration-200 focus:border-accent-300 focus:ring-2 focus:ring-accent-300/30 outline-none">
+                  <option value="image">صورة (رفع من الجهاز)</option>
+                  <option value="video">فيديو (YouTube)</option>
+                </select>
+              </div>
+
+              <div>
+                <label for="item-category" class="block text-xs font-bold text-slate-200 mb-1.5">التصنيف *</label>
+                <select id="item-category" class="w-full bg-slate-950/80 border border-white/15 rounded-xl px-3.5 py-3 text-sm font-medium text-white transition-all duration-200 focus:border-accent-300 focus:ring-2 focus:ring-accent-300/30 outline-none">
+                  <option value="moving">سيارات وأوناش النقل</option>
+                  <option value="packing">التغليف المبطن والحراري</option>
+                  <option value="team">فريق العمل والفك والتركيب</option>
+                  <option value="storage">مستودعات الأمان</option>
+                </select>
+              </div>
+
+              <div id="photo-upload-wrap">
+                <label for="item-file" class="block text-xs font-bold text-slate-200 mb-1.5">رفع الصورة من جهازك *</label>
+                <label
+                  for="item-file"
+                  class="flex items-center justify-between gap-3 bg-slate-950/80 hover:bg-slate-800/80 border border-dashed border-accent-400/50 rounded-xl px-3.5 py-2.5 cursor-pointer transition-all duration-200 min-h-[46px]"
+                >
+                  <span id="item-file-label" class="text-xs font-semibold text-slate-200 truncate">اختر صورة من الهاتف أو الكمبيوتر...</span>
+                  <span class="text-xs font-bold bg-accent-400 text-primary-900 px-2.5 py-1 rounded-lg shrink-0">اختيار</span>
+                </label>
+                <input type="file" id="item-file" accept="image/*" class="sr-only" />
+              </div>
+
+              <div id="video-url-wrap" class="hidden">
+                <label for="item-src" class="block text-xs font-bold text-slate-200 mb-1.5">رابط فيديو يوتيوب *</label>
+                <input
+                  type="text"
+                  id="item-src"
+                  dir="ltr"
+                  placeholder="https://www.youtube.com/watch?v=..."
+                  class="w-full bg-slate-950/80 border border-white/15 rounded-xl px-3.5 py-3 text-sm font-medium text-white placeholder-slate-400 transition-all duration-200 focus:border-accent-300 focus:ring-2 focus:ring-accent-300/30 outline-none"
+                />
+              </div>
+            </div>
+
+            <div id="item-preview-wrap" class="hidden flex items-center gap-4 bg-slate-950/70 border border-white/10 rounded-xl p-3">
+              <img id="item-preview-img" src="" alt="معاينة الصورة" class="w-24 h-16 object-cover rounded-lg border border-white/15 shrink-0" />
+              <div class="min-w-0 text-xs">
+                <div id="item-preview-meta" class="font-bold text-emerald-300">جاهزة للرفع</div>
+                <div class="text-slate-400 mt-0.5">يتم ضغط الصورة تلقائياً بصيغة WebP لتسريع الموقع</div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label for="item-title" class="block text-xs font-bold text-slate-200 mb-1.5">العنوان بالعربية *</label>
+                <input
+                  type="text"
+                  id="item-title"
+                  placeholder="مثال: نقل عفش فيلا بالتجمع الخامس"
+                  class="w-full bg-slate-950/80 border border-white/15 rounded-xl px-3.5 py-3 text-sm font-medium text-white placeholder-slate-400 transition-all duration-200 focus:border-accent-300 focus:ring-2 focus:ring-accent-300/30 outline-none"
+                  required
+                />
+              </div>
+
+              <div>
+                <label for="item-title-en" class="block text-xs font-bold text-slate-200 mb-1.5">العنوان بالإنجليزية (اختياري)</label>
+                <input
+                  type="text"
+                  id="item-title-en"
+                  dir="ltr"
+                  placeholder="e.g. Villa Relocation in New Cairo"
+                  class="w-full bg-slate-950/80 border border-white/15 rounded-xl px-3.5 py-3 text-sm font-medium text-white placeholder-slate-400 transition-all duration-200 focus:border-accent-300 focus:ring-2 focus:ring-accent-300/30 outline-none"
+                />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label for="item-desc" class="block text-xs font-bold text-slate-200 mb-1.5">الوصف بالعربية *</label>
+                <input
+                  type="text"
+                  id="item-desc"
+                  placeholder="تفاصيل مختصرة عن العملية والمعدات المستخدمة"
+                  class="w-full bg-slate-950/80 border border-white/15 rounded-xl px-3.5 py-3 text-sm font-medium text-white placeholder-slate-400 transition-all duration-200 focus:border-accent-300 focus:ring-2 focus:ring-accent-300/30 outline-none"
+                  required
+                />
+              </div>
+
+              <div id="video-thumb-wrap" class="hidden">
+                <label for="item-thumb-file" class="block text-xs font-bold text-slate-200 mb-1.5">صورة مصغرة للفيديو (اختياري)</label>
+                <input
+                  type="file"
+                  id="item-thumb-file"
+                  accept="image/*"
+                  class="w-full bg-slate-950/80 border border-white/15 rounded-xl px-3 py-2.5 text-xs text-slate-200 file:me-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-slate-800 file:text-white file:font-bold"
+                />
+              </div>
+            </div>
+
+            <div class="flex justify-end pt-2">
+              <button
+                type="submit"
+                id="add-media-submit"
+                class="inline-flex items-center gap-2 bg-gradient-to-l from-accent-500 to-accent-600 hover:from-accent-400 hover:to-accent-500 active:scale-[0.98] text-white font-bold px-7 py-3.5 rounded-xl shadow-lg shadow-accent-950/30 transition-all duration-200 min-h-[48px]"
+              >
+                <Plus class="w-5 h-5" aria-hidden="true" />
+                <span>إضافة إلى المعرض</span>
+              </button>
+            </div>
+          </form>
+
+          <!-- Hidden single file picker used by "تغيير الصورة" buttons on existing items -->
+          <input type="file" id="replace-photo-input" accept="image/*" class="sr-only" />
+        </section>
+
+        <!-- Current Media Catalog -->
+        <section class="bg-slate-900/65 backdrop-blur-md border border-white/10 rounded-2xl p-6 sm:p-8">
+          <div class="flex flex-wrap items-center justify-between gap-4 mb-6 pb-4 border-b border-white/10">
+            <div>
+              <h2 class="text-lg font-extrabold text-white">ترتيب وسائط المعرض الحالية</h2>
+              <p class="text-xs text-slate-300 mt-1">استخدم أزرار التقديم والتأخير لتغيير الترتيب، أو احذف أي عنصر</p>
+            </div>
+            <button type="button" id="reset-default-btn" class="text-xs font-bold text-slate-200 hover:text-white bg-slate-800/90 hover:bg-slate-700 active:scale-[0.98] px-3.5 py-2.5 rounded-xl border border-white/10 transition-all duration-200 min-h-[40px]">
+              استعادة القائمة الأصلية
+            </button>
+          </div>
+
+          <div id="media-table-container" class="space-y-3"></div>
+        </section>
+      </div>
     </main>
   </div>
 
@@ -463,24 +773,389 @@ Astro.response.headers.set('Cache-Control', 'no-store');
     const lockBtn = document.getElementById('lock-btn');
     const toast = document.getElementById('admin-toast');
     const toastText = document.getElementById('admin-toast-text');
+    const toastBar = document.getElementById('admin-toast-bar');
     const SESSION_KEY = 'mover_admin_key';
+    const ACTIVE_TAB_KEY = 'mover_admin_active_tab';
+    let toastTimer = null;
+    let currentTrafficRange = '7d';
+    let trafficLoadedOnce = false;
 
     function showToast(msg, isError = false) {
       if (!toast || !toastText) return;
       toastText.textContent = msg;
-      toast.classList.toggle('bg-emerald-900/90', !isError);
-      toast.classList.toggle('border-emerald-600', !isError);
+      toast.classList.toggle('bg-emerald-950/95', !isError);
+      toast.classList.toggle('border-emerald-500/40', !isError);
       toast.classList.toggle('text-emerald-100', !isError);
-      toast.classList.toggle('bg-rose-900/90', isError);
-      toast.classList.toggle('border-rose-600', isError);
+      toast.classList.toggle('bg-rose-950/95', isError);
+      toast.classList.toggle('border-rose-500/40', isError);
       toast.classList.toggle('text-rose-100', isError);
-      toast.classList.remove('hidden');
-      setTimeout(() => toast.classList.add('hidden'), 4000);
+      if (toastBar) {
+        toastBar.classList.toggle('bg-emerald-400', !isError);
+        toastBar.classList.toggle('bg-rose-400', isError);
+        toastBar.classList.remove('toast-progress-bar');
+        void toastBar.offsetWidth;
+        toastBar.classList.add('toast-progress-bar');
+      }
+      toast.classList.remove('hidden', 'toast-animate');
+      void toast.offsetWidth;
+      toast.classList.add('toast-animate');
+
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.add('hidden'), 4000);
     }
 
     function getAdminKey() {
       return sessionStorage.getItem(SESSION_KEY) || '';
     }
+
+    // Tab Navigation System
+    const VALID_TABS = ['traffic', 'settings', 'media'];
+    const tabButtons = Array.from(document.querySelectorAll('.tab-btn'));
+    const tabPanels = Array.from(document.querySelectorAll('[data-tab-panel]'));
+
+    function switchTab(tabName, updateHash = true) {
+      const target = VALID_TABS.includes(tabName) ? tabName : 'traffic';
+
+      tabButtons.forEach((btn) => {
+        const isActive = btn.dataset.tab === target;
+        btn.setAttribute('aria-selected', String(isActive));
+        btn.classList.toggle('bg-gradient-to-l', isActive);
+        btn.classList.toggle('from-accent-500/25', isActive);
+        btn.classList.toggle('to-accent-400/15', isActive);
+        btn.classList.toggle('text-accent-200', isActive);
+        btn.classList.toggle('border', isActive);
+        btn.classList.toggle('border-accent-400/35', isActive);
+        btn.classList.toggle('shadow-md', isActive);
+        btn.classList.toggle('text-slate-300', !isActive);
+        btn.classList.toggle('hover:text-white', !isActive);
+        btn.classList.toggle('hover:bg-white/5', !isActive);
+      });
+
+      tabPanels.forEach((panel) => {
+        const isTarget = panel.dataset.tabPanel === target;
+        panel.classList.toggle('hidden', !isTarget);
+        if (isTarget) {
+          panel.classList.remove('tab-panel-animate');
+          void panel.offsetWidth;
+          panel.classList.add('tab-panel-animate');
+        }
+      });
+
+      sessionStorage.setItem(ACTIVE_TAB_KEY, target);
+      if (updateHash && window.location.hash !== `#${target}`) {
+        history.replaceState(null, '', `#${target}`);
+      }
+
+      if (target === 'traffic' && getAdminKey() && !trafficLoadedOnce) {
+        loadTrafficData(currentTrafficRange);
+      }
+    }
+
+    tabButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        switchTab(btn.dataset.tab || 'traffic');
+      });
+    });
+
+    function resolveInitialTab() {
+      const hashTab = window.location.hash.replace('#', '').trim();
+      if (VALID_TABS.includes(hashTab)) return hashTab;
+      const savedTab = sessionStorage.getItem(ACTIVE_TAB_KEY) || '';
+      if (VALID_TABS.includes(savedTab)) return savedTab;
+      return 'traffic';
+    }
+
+    window.addEventListener('hashchange', () => {
+      const hashTab = window.location.hash.replace('#', '').trim();
+      if (VALID_TABS.includes(hashTab)) {
+        switchTab(hashTab, false);
+      }
+    });
+
+    // Country Code -> Flag Emoji
+    function countryCodeToFlag(code) {
+      if (!code || code.length !== 2) return '🌍';
+      const upper = code.toUpperCase();
+      if (!/^[A-Z]{2}$/.test(upper)) return '🌍';
+      return String.fromCodePoint(
+        ...Array.from(upper).map((char) => 127397 + char.charCodeAt(0))
+      );
+    }
+
+    const RANGE_LABELS = {
+      today: 'زيارات اليوم',
+      '7d': 'خلال آخر 7 أيام',
+      '30d': 'خلال آخر 30 يوماً',
+      all: 'منذ بدء التسجيل',
+    };
+
+    const rangeButtons = Array.from(document.querySelectorAll('.range-btn'));
+    const refreshTrafficBtn = document.getElementById('refresh-traffic-btn');
+    const refreshTrafficIcon = document.getElementById('refresh-traffic-icon');
+
+    function syncRangeButtons(activeRange) {
+      rangeButtons.forEach((btn) => {
+        const isActive = btn.dataset.range === activeRange;
+        btn.classList.toggle('bg-accent-500/20', isActive);
+        btn.classList.toggle('text-accent-200', isActive);
+        btn.classList.toggle('border', isActive);
+        btn.classList.toggle('border-accent-400/30', isActive);
+        btn.classList.toggle('text-slate-300', !isActive);
+        btn.classList.toggle('hover:text-white', !isActive);
+      });
+    }
+
+    function formatArabicDate(isoDate) {
+      if (!isoDate) return '';
+      try {
+        const d = new Date(`${isoDate}T00:00:00Z`);
+        return d.toLocaleDateString('ar-EG', {
+          month: 'short',
+          day: 'numeric',
+          timeZone: 'UTC',
+        });
+      } catch {
+        return isoDate;
+      }
+    }
+
+    function formatPageLabel(path) {
+      if (path === '/' || path === '') return 'الصفحة الرئيسية (العربية)';
+      if (path === '/en' || path === '/en/') return 'الصفحة الإنجليزية (/en)';
+      return path;
+    }
+
+    function renderTrafficStats(data) {
+      const totalEl = document.getElementById('traffic-total');
+      const todayEl = document.getElementById('traffic-today');
+      const rangeLabelEl = document.getElementById('traffic-range-label');
+      const citiesCountEl = document.getElementById('traffic-cities-count');
+      const topCityEl = document.getElementById('traffic-top-city');
+      const topCityVisitsEl = document.getElementById('traffic-top-city-visits');
+      const peakEl = document.getElementById('traffic-chart-peak');
+
+      if (totalEl) totalEl.textContent = Number(data.totalVisits || 0).toLocaleString('en-US');
+      if (todayEl) todayEl.textContent = Number(data.todayVisits || 0).toLocaleString('en-US');
+      if (rangeLabelEl) rangeLabelEl.textContent = RANGE_LABELS[data.range] || RANGE_LABELS['7d'];
+      if (citiesCountEl) citiesCountEl.textContent = Number(data.uniqueCities || 0).toLocaleString('en-US');
+
+      if (topCityEl && topCityVisitsEl) {
+        if (data.topCity && data.topCity.visits > 0) {
+          const flag = countryCodeToFlag(data.topCity.country);
+          const cityName = data.topCity.city || 'زيارات محلية / غير محدد';
+          topCityEl.textContent = `${flag} ${cityName}`;
+          topCityVisitsEl.textContent = `${Number(data.topCity.visits).toLocaleString('en-US')} زيارة مسجلة`;
+        } else {
+          topCityEl.textContent = '—';
+          topCityVisitsEl.textContent = 'لا توجد بيانات بعد';
+        }
+      }
+
+      // Render Daily Visits Bar Chart
+      const chartContainer = document.getElementById('traffic-daily-chart');
+      const daily = Array.isArray(data.dailyVisits) ? data.dailyVisits : [];
+      const maxDaily = daily.reduce((max, item) => Math.max(max, Number(item.visits || 0)), 0);
+      if (peakEl) peakEl.textContent = `أعلى يوم: ${maxDaily.toLocaleString('en-US')}`;
+
+      if (chartContainer) {
+        chartContainer.replaceChildren();
+        if (daily.length === 0) {
+          const empty = document.createElement('div');
+          empty.className = 'py-8 text-center text-xs text-slate-400';
+          empty.textContent = 'لا توجد زيارات مسجلة في هذه الفترة حتى الآن.';
+          chartContainer.append(empty);
+        } else {
+          daily.forEach((day) => {
+            const visits = Number(day.visits || 0);
+            const pct = maxDaily > 0 ? Math.max(visits > 0 ? 6 : 0, Math.round((visits / maxDaily) * 100)) : 0;
+
+            const row = document.createElement('div');
+            row.className = 'grid grid-cols-[4.5rem_1fr_2.5rem] sm:grid-cols-[7rem_1fr_4rem] items-center gap-2.5 sm:gap-3';
+
+            const dateLabel = document.createElement('span');
+            dateLabel.className = 'text-xs font-medium text-slate-300 truncate';
+            dateLabel.textContent = formatArabicDate(day.date);
+
+            const track = document.createElement('div');
+            track.className = 'h-3.5 rounded-full bg-slate-950/90 border border-white/5 overflow-hidden';
+
+            const fill = document.createElement('div');
+            fill.className = 'h-full rounded-full bg-gradient-to-l from-accent-300 via-accent-400 to-sky-400 transition-all duration-500';
+            fill.style.width = `${pct}%`;
+            track.append(fill);
+
+            const countLabel = document.createElement('span');
+            countLabel.className = 'text-xs font-mono font-bold text-white text-end tabular-nums';
+            countLabel.textContent = visits.toLocaleString('en-US');
+
+            row.append(dateLabel, track, countLabel);
+            chartContainer.append(row);
+          });
+        }
+      }
+
+      // Render Cities List
+      const citiesContainer = document.getElementById('traffic-cities-list');
+      const cities = Array.isArray(data.cities) ? data.cities : [];
+      const totalCityVisits = cities.reduce((sum, c) => sum + Number(c.visits || 0), 0);
+
+      if (citiesContainer) {
+        citiesContainer.replaceChildren();
+        if (cities.length === 0) {
+          const empty = document.createElement('div');
+          empty.className = 'py-8 text-center text-xs text-slate-400';
+          empty.textContent = dbConnected
+            ? 'لم تُسجّل زيارات بعد. ستظهر المدن هنا بمجرد زيارة الموقع.'
+            : 'قاعدة بيانات D1 غير متصلة حالياً — اربط D1 لتسجيل الزيارات والمدن.';
+          citiesContainer.append(empty);
+        } else {
+          const maxCity = Math.max(...cities.map((c) => Number(c.visits || 0)), 1);
+          cities.forEach((item) => {
+            const visits = Number(item.visits || 0);
+            const share = totalCityVisits > 0 ? Math.round((visits / totalCityVisits) * 100) : 0;
+            const barWidth = Math.max(4, Math.round((visits / maxCity) * 100));
+
+            const card = document.createElement('div');
+            card.className = 'p-3 rounded-xl bg-slate-950/60 border border-white/5 hover:border-white/15 transition-colors space-y-2';
+
+            const topRow = document.createElement('div');
+            topRow.className = 'flex items-center justify-between gap-2 text-xs';
+
+            const left = document.createElement('div');
+            left.className = 'flex items-center gap-2 min-w-0';
+
+            const flagSpan = document.createElement('span');
+            flagSpan.className = 'text-base leading-none shrink-0';
+            flagSpan.textContent = countryCodeToFlag(item.country);
+
+            const citySpan = document.createElement('span');
+            citySpan.className = 'font-bold text-white truncate';
+            citySpan.textContent = item.city || 'زيارة محلية / غير محدد';
+
+            left.append(flagSpan, citySpan);
+            if (item.country) {
+              const countryBadge = document.createElement('span');
+              countryBadge.className = 'text-[10px] font-mono text-slate-300 bg-slate-800/80 px-1.5 py-0.5 rounded';
+              countryBadge.textContent = item.country;
+              left.append(countryBadge);
+            }
+
+            const right = document.createElement('div');
+            right.className = 'flex items-center gap-2 shrink-0';
+
+            const shareBadge = document.createElement('span');
+            shareBadge.className = 'text-[11px] font-mono text-slate-400';
+            shareBadge.textContent = `${share}%`;
+
+            const countBadge = document.createElement('span');
+            countBadge.className = 'text-xs font-mono font-bold text-amber-300 tabular-nums';
+            countBadge.textContent = visits.toLocaleString('en-US');
+
+            right.append(shareBadge, countBadge);
+            topRow.append(left, right);
+
+            const track = document.createElement('div');
+            track.className = 'h-2 rounded-full bg-slate-900 overflow-hidden';
+            const fill = document.createElement('div');
+            fill.className = 'h-full rounded-full bg-gradient-to-l from-amber-300 to-accent-500 transition-all duration-500';
+            fill.style.width = `${barWidth}%`;
+            track.append(fill);
+
+            card.append(topRow, track);
+            citiesContainer.append(card);
+          });
+        }
+      }
+
+      // Render Top Pages List
+      const pagesContainer = document.getElementById('traffic-pages-list');
+      const pages = Array.isArray(data.topPages) ? data.topPages : [];
+
+      if (pagesContainer) {
+        pagesContainer.replaceChildren();
+        if (pages.length === 0) {
+          const empty = document.createElement('div');
+          empty.className = 'py-8 text-center text-xs text-slate-400';
+          empty.textContent = 'لا توجد صفحات مسجلة في هذه الفترة.';
+          pagesContainer.append(empty);
+        } else {
+          const maxPage = Math.max(...pages.map((p) => Number(p.visits || 0)), 1);
+          pages.forEach((page) => {
+            const visits = Number(page.visits || 0);
+            const barWidth = Math.max(5, Math.round((visits / maxPage) * 100));
+
+            const card = document.createElement('div');
+            card.className = 'p-3 rounded-xl bg-slate-950/60 border border-white/5 space-y-2';
+
+            const row = document.createElement('div');
+            row.className = 'flex items-center justify-between gap-2 text-xs';
+
+            const titleWrap = document.createElement('div');
+            titleWrap.className = 'min-w-0';
+            const labelEl = document.createElement('div');
+            labelEl.className = 'font-bold text-white truncate';
+            labelEl.textContent = formatPageLabel(page.path);
+            const pathEl = document.createElement('div');
+            pathEl.className = 'text-[11px] font-mono text-slate-400 truncate';
+            pathEl.dir = 'ltr';
+            pathEl.textContent = page.path;
+            titleWrap.append(labelEl, pathEl);
+
+            const countEl = document.createElement('span');
+            countEl.className = 'text-xs font-mono font-bold text-emerald-300 shrink-0 tabular-nums';
+            countEl.textContent = visits.toLocaleString('en-US');
+
+            row.append(titleWrap, countEl);
+
+            const track = document.createElement('div');
+            track.className = 'h-1.5 rounded-full bg-slate-900 overflow-hidden';
+            const fill = document.createElement('div');
+            fill.className = 'h-full rounded-full bg-gradient-to-l from-emerald-300 to-teal-500 transition-all duration-500';
+            fill.style.width = `${barWidth}%`;
+            track.append(fill);
+
+            card.append(row, track);
+            pagesContainer.append(card);
+          });
+        }
+      }
+    }
+
+    async function loadTrafficData(range = currentTrafficRange, showSuccessToast = false) {
+      currentTrafficRange = range;
+      syncRangeButtons(range);
+      refreshTrafficIcon?.classList.add('animate-spin');
+
+      try {
+        const res = await fetch(`/api/traffic?range=${encodeURIComponent(range)}`, {
+          headers: { 'x-admin-key': getAdminKey() },
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || 'تعذر تحميل إحصائيات الزيارات');
+        }
+        trafficLoadedOnce = true;
+        renderTrafficStats(data);
+        if (showSuccessToast) {
+          showToast('تم تحديث إحصائيات الزيارات.');
+        }
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : 'تعذر تحميل إحصائيات الزيارات.', true);
+      } finally {
+        refreshTrafficIcon?.classList.remove('animate-spin');
+      }
+    }
+
+    rangeButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const range = btn.dataset.range || '7d';
+        loadTrafficData(range);
+      });
+    });
+
+    refreshTrafficBtn?.addEventListener('click', () => {
+      loadTrafficData(currentTrafficRange, true);
+    });
 
     async function verifyKey(candidateKey) {
       try {
@@ -500,6 +1175,11 @@ Astro.response.headers.set('Cache-Control', 'no-store');
       authGate?.classList.add('hidden');
       dashboard?.classList.remove('hidden');
       authError?.classList.add('hidden');
+      const initialTab = resolveInitialTab();
+      switchTab(initialTab);
+      if (initialTab === 'traffic' && !trafficLoadedOnce) {
+        loadTrafficData(currentTrafficRange);
+      }
     }
 
     (async () => {
@@ -598,22 +1278,6 @@ Astro.response.headers.set('Cache-Control', 'no-store');
       }
     });
 
-    document.getElementById('copy-settings-json')?.addEventListener('click', () => {
-      navigator.clipboard.writeText(JSON.stringify(currentSettings, null, 2)).then(() => {
-        showToast('تم نسخ settings.json إلى الحافظة.');
-      });
-    });
-
-    document.getElementById('download-settings-json')?.addEventListener('click', () => {
-      const blob = new Blob([JSON.stringify(currentSettings, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'settings.json';
-      a.click();
-      URL.revokeObjectURL(url);
-    });
-
     // Media Data Management (backed by Cloudflare D1)
     let mediaData = JSON.parse(JSON.stringify(initialMedia));
 
@@ -674,17 +1338,17 @@ Astro.response.headers.set('Cache-Control', 'no-store');
 
       mediaData.items.forEach((item, index) => {
         const itemRow = document.createElement('div');
-        itemRow.className = 'flex flex-col sm:flex-row items-center justify-between p-4 bg-slate-900 border border-slate-800 rounded-xl gap-4 hover:border-slate-700 transition-colors';
+        itemRow.className = 'flex flex-col sm:flex-row items-center justify-between p-4 bg-slate-950/75 border border-white/10 rounded-xl gap-4 hover:border-white/20 transition-all duration-200';
 
         const left = document.createElement('div');
         left.className = 'flex items-center gap-4 w-full sm:w-auto min-w-0';
 
         const num = document.createElement('span');
-        num.className = 'w-8 h-8 rounded-lg bg-slate-800 text-slate-200 font-mono text-xs font-bold flex items-center justify-center shrink-0 border border-slate-700';
+        num.className = 'w-8 h-8 rounded-lg bg-slate-800/90 text-slate-200 font-mono text-xs font-bold flex items-center justify-center shrink-0 border border-white/10';
         num.textContent = `#${index + 1}`;
 
         const thumbWrap = document.createElement('div');
-        thumbWrap.className = 'w-16 h-12 rounded-lg overflow-hidden bg-slate-800 shrink-0 relative';
+        thumbWrap.className = 'w-16 h-12 rounded-lg overflow-hidden bg-slate-800 shrink-0 relative ring-1 ring-white/10';
         const img = document.createElement('img');
         img.src = item.thumbnail || item.src;
         img.alt = item.title || '';
@@ -704,14 +1368,14 @@ Astro.response.headers.set('Cache-Control', 'no-store');
         titleDiv.className = 'font-bold text-white text-sm truncate';
         titleDiv.textContent = item.title || '';
         const subDiv = document.createElement('div');
-        subDiv.className = 'text-xs text-slate-300 flex items-center gap-2 mt-0.5';
+        subDiv.className = 'text-xs text-slate-300 flex flex-wrap items-center gap-x-2 gap-y-0.5 mt-0.5 min-w-0';
         const catSpan = document.createElement('span');
         catSpan.className = 'text-accent-300 font-semibold';
         catSpan.textContent = item.category || '';
         const sep = document.createElement('span');
         sep.textContent = '·';
         const srcSpan = document.createElement('span');
-        srcSpan.className = 'truncate font-mono text-[11px] max-w-[240px]';
+        srcSpan.className = 'truncate font-mono text-[11px] max-w-[180px] sm:max-w-[240px]';
         srcSpan.textContent = item.src || '';
         subDiv.append(catSpan, sep, srcSpan);
         meta.append(titleDiv, subDiv);
@@ -723,20 +1387,20 @@ Astro.response.headers.set('Cache-Control', 'no-store');
 
         const replaceBtn = document.createElement('button');
         replaceBtn.type = 'button';
-        replaceBtn.className = 'px-3 py-2 rounded-lg bg-accent-700/80 hover:bg-accent text-white transition-colors text-xs font-bold min-h-[38px]';
+        replaceBtn.className = 'px-3 py-2 rounded-lg bg-accent-600/85 hover:bg-accent active:scale-[0.98] text-white transition-all duration-200 text-xs font-bold min-h-[38px]';
         replaceBtn.textContent = item.type === 'video' ? 'تغيير الغلاف' : 'تغيير الصورة';
         replaceBtn.addEventListener('click', () => triggerReplacePhoto(index));
 
         const upBtn = document.createElement('button');
         upBtn.type = 'button';
-        upBtn.className = 'px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white transition-colors text-xs font-bold disabled:opacity-35 disabled:pointer-events-none min-h-[38px]';
+        upBtn.className = 'px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-[0.98] text-slate-200 hover:text-white border border-white/10 transition-all duration-200 text-xs font-bold disabled:opacity-35 disabled:pointer-events-none min-h-[38px]';
         upBtn.disabled = index === 0;
         upBtn.textContent = 'تقديم';
         upBtn.addEventListener('click', () => moveItem(index, -1));
 
         const downBtn = document.createElement('button');
         downBtn.type = 'button';
-        downBtn.className = 'px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white transition-colors text-xs font-bold disabled:opacity-35 disabled:pointer-events-none min-h-[38px]';
+        downBtn.className = 'px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-[0.98] text-slate-200 hover:text-white border border-white/10 transition-all duration-200 text-xs font-bold disabled:opacity-35 disabled:pointer-events-none min-h-[38px]';
         downBtn.disabled = index === mediaData.items.length - 1;
         downBtn.textContent = 'تأخير';
         downBtn.addEventListener('click', () => moveItem(index, 1));
@@ -745,12 +1409,12 @@ Astro.response.headers.set('Cache-Control', 'no-store');
         previewLink.href = item.src;
         previewLink.target = '_blank';
         previewLink.rel = 'noopener noreferrer';
-        previewLink.className = 'px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white transition-colors text-xs font-semibold min-h-[38px] inline-flex items-center';
+        previewLink.className = 'px-3 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 active:scale-[0.98] text-slate-200 hover:text-white border border-white/10 transition-all duration-200 text-xs font-semibold min-h-[38px] inline-flex items-center';
         previewLink.textContent = 'معاينة';
 
         const delBtn = document.createElement('button');
         delBtn.type = 'button';
-        delBtn.className = 'px-3 py-2 rounded-lg bg-rose-900/50 hover:bg-rose-800 text-rose-200 hover:text-white transition-colors text-xs font-bold min-h-[38px]';
+        delBtn.className = 'px-3 py-2 rounded-lg bg-rose-950/60 hover:bg-rose-800 active:scale-[0.98] text-rose-200 hover:text-white border border-rose-500/25 transition-all duration-200 text-xs font-bold min-h-[38px]';
         delBtn.textContent = 'حذف';
         delBtn.addEventListener('click', () => {
           if (confirm('هل أنت متأكد من حذف هذا العنصر من المعرض؟')) {

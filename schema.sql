@@ -38,6 +38,18 @@ CREATE TABLE IF NOT EXISTS uploaded_images (
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS page_visits (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  path TEXT NOT NULL,
+  city TEXT NOT NULL DEFAULT '',
+  country TEXT NOT NULL DEFAULT '',
+  user_agent TEXT NOT NULL DEFAULT '',
+  visited_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_visits_date ON page_visits(visited_at);
+CREATE INDEX IF NOT EXISTS idx_visits_city ON page_visits(city);
+
 INSERT OR IGNORE INTO site_settings (
   id, phone, display_phone, whatsapp_number, working_hours,
   top_bar_enabled, social_facebook, social_instagram, social_tiktok, social_youtube

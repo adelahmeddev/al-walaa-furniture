@@ -101,6 +101,18 @@ async function ensureSchemaAndSeed(db: D1Database): Promise<void> {
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
     `),
+    db.prepare(`
+      CREATE TABLE IF NOT EXISTS page_visits (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        path TEXT NOT NULL,
+        city TEXT NOT NULL DEFAULT '',
+        country TEXT NOT NULL DEFAULT '',
+        user_agent TEXT NOT NULL DEFAULT '',
+        visited_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `),
+    db.prepare('CREATE INDEX IF NOT EXISTS idx_visits_date ON page_visits(visited_at)'),
+    db.prepare('CREATE INDEX IF NOT EXISTS idx_visits_city ON page_visits(city)'),
   ]);
 
   const settingsCount = await db
@@ -378,4 +390,199 @@ export async function getUploadedImage(
   }
 
   return { data: bytes, mimeType: row.mime_type || 'image/webp' };
+}
+
+export type TrafficRange = 'today' | '7d' | '30d' | 'all';
+
+export interface TrafficCityItem {
+  city: string;
+  country: string;
+  visits: number;
+}
+
+export interface TrafficDailyItem {
+  date: string;
+  visits: number;
+}
+
+export interface TrafficPageItem {
+  path: string;
+  visits: number;
+}
+
+export interface TrafficStats {
+  range: TrafficRange;
+  totalVisits: number;
+  todayVisits: number;
+  uniqueCities: number;
+  topCity: TrafficCityItem | null;
+  cities: TrafficCityItem[];
+  dailyVisits: TrafficDailyItem[];
+  topPages: TrafficPageItem[];
+}
+
+export async function recordPageVisit(
+  db: D1Database,
+  visit: { path: string; city?: string; country?: string; userAgent?: string }
+): Promise<void> {
+  try {
+    await ensureSchemaAndSeed(db);
+    const path = String(visit.path || '/').slice(0, 255);
+    const city = String(visit.city || '').trim().slice(0, 120);
+    const country = String(visit.country || '').trim().slice(0, 16);
+    const userAgent = String(visit.userAgent || '').trim().slice(0, 300);
+
+    await db
+      .prepare('INSERT INTO page_visits (path, city, country, user_agent) VALUES (?, ?, ?, ?)')
+      .bind(path, city, country, userAgent)
+      .run();
+  } catch (err) {
+    console.error('D1 recordPageVisit error:', err);
+  }
+}
+
+function getDateRangeWhereClause(range: TrafficRange): string {
+  switch (range) {
+    case 'today':
+      return "WHERE visited_at >= datetime('now', 'start of day')";
+    case '7d':
+      return "WHERE visited_at >= datetime('now', '-6 days', 'start of day')";
+    case '30d':
+      return "WHERE visited_at >= datetime('now', '-29 days', 'start of day')";
+    case 'all':
+    default:
+      return '';
+  }
+}
+
+function buildDailySeries(
+  range: TrafficRange,
+  rows: TrafficDailyItem[]
+): TrafficDailyItem[] {
+  if (range === 'all') {
+    return rows.slice(-30);
+  }
+
+  const daysCount = range === 'today' ? 1 : range === '7d' ? 7 : 30;
+  const countsByDate = new Map(rows.map((r) => [r.date, r.visits]));
+  const result: TrafficDailyItem[] = [];
+  const now = new Date();
+
+  for (let i = daysCount - 1; i >= 0; i--) {
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - i));
+    const isoDate = d.toISOString().slice(0, 10);
+    result.push({
+      date: isoDate,
+      visits: countsByDate.get(isoDate) || 0,
+    });
+  }
+
+  return result;
+}
+
+export async function getTrafficStats(
+  db?: D1Database,
+  rawRange: string = '7d'
+): Promise<TrafficStats> {
+  const range: TrafficRange =
+    rawRange === 'today' || rawRange === '7d' || rawRange === '30d' || rawRange === 'all'
+      ? rawRange
+      : '7d';
+
+  if (!db) {
+    return {
+      range,
+      totalVisits: 0,
+      todayVisits: 0,
+      uniqueCities: 0,
+      topCity: null,
+      cities: [],
+      dailyVisits: buildDailySeries(range, []),
+      topPages: [],
+    };
+  }
+
+  try {
+    await ensureSchemaAndSeed(db);
+    const whereClause = getDateRangeWhereClause(range);
+
+    const [totalRow, todayRow, citiesRes, dailyRes, pagesRes] = await Promise.all([
+      db
+        .prepare(`SELECT COUNT(*) AS cnt FROM page_visits ${whereClause}`)
+        .first<{ cnt: number }>(),
+      db
+        .prepare("SELECT COUNT(*) AS cnt FROM page_visits WHERE visited_at >= datetime('now', 'start of day')")
+        .first<{ cnt: number }>(),
+      db
+        .prepare(
+          `SELECT TRIM(city) AS city, TRIM(country) AS country, COUNT(*) AS visits
+           FROM page_visits
+           ${whereClause}
+           GROUP BY TRIM(city), TRIM(country)
+           ORDER BY visits DESC
+           LIMIT 25`
+        )
+        .all<TrafficCityItem>(),
+      db
+        .prepare(
+          `SELECT date(visited_at) AS date, COUNT(*) AS visits
+           FROM page_visits
+           ${whereClause}
+           GROUP BY date(visited_at)
+           ORDER BY date ASC`
+        )
+        .all<TrafficDailyItem>(),
+      db
+        .prepare(
+          `SELECT path, COUNT(*) AS visits
+           FROM page_visits
+           ${whereClause}
+           GROUP BY path
+           ORDER BY visits DESC
+           LIMIT 10`
+        )
+        .all<TrafficPageItem>(),
+    ]);
+
+    const cities = (citiesRes.results || []).map((row) => ({
+      city: row.city || '',
+      country: row.country || '',
+      visits: Number(row.visits || 0),
+    }));
+
+    const knownCities = cities.filter((c) => c.city !== '');
+    const topCity = knownCities[0] || cities[0] || null;
+
+    return {
+      range,
+      totalVisits: Number(totalRow?.cnt || 0),
+      todayVisits: Number(todayRow?.cnt || 0),
+      uniqueCities: knownCities.length,
+      topCity,
+      cities,
+      dailyVisits: buildDailySeries(
+        range,
+        (dailyRes.results || []).map((r) => ({
+          date: r.date,
+          visits: Number(r.visits || 0),
+        }))
+      ),
+      topPages: (pagesRes.results || []).map((p) => ({
+        path: p.path,
+        visits: Number(p.visits || 0),
+      })),
+    };
+  } catch (err) {
+    console.error('D1 getTrafficStats error:', err);
+    return {
+      range,
+      totalVisits: 0,
+      todayVisits: 0,
+      uniqueCities: 0,
+      topCity: null,
+      cities: [],
+      dailyVisits: buildDailySeries(range, []),
+      topPages: [],
+    };
+  }
 }
