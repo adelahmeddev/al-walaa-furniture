@@ -30,6 +30,14 @@ CREATE TABLE IF NOT EXISTS media_items (
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS uploaded_images (
+  id TEXT PRIMARY KEY,
+  mime_type TEXT NOT NULL,
+  data BLOB NOT NULL,
+  size_bytes INTEGER NOT NULL,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
 INSERT OR IGNORE INTO site_settings (
   id, phone, display_phone, whatsapp_number, working_hours,
   top_bar_enabled, social_facebook, social_instagram, social_tiktok, social_youtube

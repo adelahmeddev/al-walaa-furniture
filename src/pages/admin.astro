@@ -327,8 +327,8 @@ Astro.response.headers.set('Cache-Control', 'no-store');
             <div>
               <label for="item-type" class="block text-xs font-bold text-slate-200 mb-1.5">نوع الوسيط *</label>
               <select id="item-type" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-3 text-sm font-medium text-white focus:border-accent-300">
-                <option value="image">صورة (Image)</option>
-                <option value="video">فيديو (YouTube Video)</option>
+                <option value="image">صورة (رفع من الجهاز)</option>
+                <option value="video">فيديو (YouTube)</option>
               </select>
             </div>
 
@@ -342,16 +342,35 @@ Astro.response.headers.set('Cache-Control', 'no-store');
               </select>
             </div>
 
-            <div>
-              <label for="item-src" class="block text-xs font-bold text-slate-200 mb-1.5">رابط الصورة أو الفيديو *</label>
+            <div id="photo-upload-wrap">
+              <label for="item-file" class="block text-xs font-bold text-slate-200 mb-1.5">رفع الصورة من جهازك *</label>
+              <label
+                for="item-file"
+                class="flex items-center justify-between gap-3 bg-slate-900 hover:bg-slate-800/80 border border-dashed border-accent-400/50 rounded-xl px-3.5 py-2.5 cursor-pointer transition-colors min-h-[46px]"
+              >
+                <span id="item-file-label" class="text-xs font-semibold text-slate-200 truncate">اختر صورة من الهاتف أو الكمبيوتر...</span>
+                <span class="text-xs font-bold bg-accent-400 text-primary-900 px-2.5 py-1 rounded-lg shrink-0">اختيار</span>
+              </label>
+              <input type="file" id="item-file" accept="image/*" class="sr-only" />
+            </div>
+
+            <div id="video-url-wrap" class="hidden">
+              <label for="item-src" class="block text-xs font-bold text-slate-200 mb-1.5">رابط فيديو يوتيوب *</label>
               <input
                 type="text"
                 id="item-src"
                 dir="ltr"
-                placeholder="https://... or /media/photo.jpg"
+                placeholder="https://www.youtube.com/watch?v=..."
                 class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-3 text-sm font-medium text-white placeholder-slate-400 focus:border-accent-300"
-                required
               />
+            </div>
+          </div>
+
+          <div id="item-preview-wrap" class="hidden flex items-center gap-4 bg-slate-900/70 border border-slate-800 rounded-xl p-3">
+            <img id="item-preview-img" src="" alt="معاينة الصورة" class="w-24 h-16 object-cover rounded-lg border border-slate-700 shrink-0" />
+            <div class="min-w-0 text-xs">
+              <div id="item-preview-meta" class="font-bold text-emerald-300">جاهزة للرفع</div>
+              <div class="text-slate-400 mt-0.5">يتم ضغط الصورة تلقائياً بصيغة WebP لتسريع الموقع</div>
             </div>
           </div>
 
@@ -391,14 +410,13 @@ Astro.response.headers.set('Cache-Control', 'no-store');
               />
             </div>
 
-            <div>
-              <label for="item-thumb" class="block text-xs font-bold text-slate-200 mb-1.5">رابط صورة مصغرة (اختياري)</label>
+            <div id="video-thumb-wrap" class="hidden">
+              <label for="item-thumb-file" class="block text-xs font-bold text-slate-200 mb-1.5">صورة مصغرة للفيديو (اختياري)</label>
               <input
-                type="text"
-                id="item-thumb"
-                dir="ltr"
-                placeholder="https://... poster image URL"
-                class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-3 text-sm font-medium text-white placeholder-slate-400 focus:border-accent-300"
+                type="file"
+                id="item-thumb-file"
+                accept="image/*"
+                class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-xs text-slate-200 file:me-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-slate-800 file:text-white file:font-bold"
               />
             </div>
           </div>
@@ -406,6 +424,7 @@ Astro.response.headers.set('Cache-Control', 'no-store');
           <div class="flex justify-end pt-2">
             <button
               type="submit"
+              id="add-media-submit"
               class="inline-flex items-center gap-2 bg-accent hover:bg-accent-700 text-white font-bold px-7 py-3.5 rounded-xl shadow-md transition-colors min-h-[48px]"
             >
               <Plus class="w-5 h-5" aria-hidden="true" />
@@ -413,6 +432,9 @@ Astro.response.headers.set('Cache-Control', 'no-store');
             </button>
           </div>
         </form>
+
+        <!-- Hidden single file picker used by "تغيير الصورة" buttons on existing items -->
+        <input type="file" id="replace-photo-input" accept="image/*" class="sr-only" />
       </section>
 
       <!-- Current Media Catalog -->
@@ -697,7 +719,13 @@ Astro.response.headers.set('Cache-Control', 'no-store');
         left.append(num, thumbWrap, meta);
 
         const actions = document.createElement('div');
-        actions.className = 'flex items-center gap-2 shrink-0 self-end sm:self-center';
+        actions.className = 'flex flex-wrap items-center gap-2 shrink-0 self-end sm:self-center';
+
+        const replaceBtn = document.createElement('button');
+        replaceBtn.type = 'button';
+        replaceBtn.className = 'px-3 py-2 rounded-lg bg-accent-700/80 hover:bg-accent text-white transition-colors text-xs font-bold min-h-[38px]';
+        replaceBtn.textContent = item.type === 'video' ? 'تغيير الغلاف' : 'تغيير الصورة';
+        replaceBtn.addEventListener('click', () => triggerReplacePhoto(index));
 
         const upBtn = document.createElement('button');
         upBtn.type = 'button';
@@ -731,47 +759,179 @@ Astro.response.headers.set('Cache-Control', 'no-store');
           }
         });
 
-        actions.append(upBtn, downBtn, previewLink, delBtn);
+        actions.append(replaceBtn, upBtn, downBtn, previewLink, delBtn);
         itemRow.append(left, actions);
         container.append(itemRow);
       });
     }
 
+    async function compressToWebP(file) {
+      const bitmap = await createImageBitmap(file);
+      const maxDim = 1400;
+      const scale = Math.min(1, maxDim / Math.max(bitmap.width, bitmap.height));
+      const width = Math.max(1, Math.round(bitmap.width * scale));
+      const height = Math.max(1, Math.round(bitmap.height * scale));
+
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(bitmap, 0, 0, width, height);
+      bitmap.close();
+
+      let blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/webp', 0.84));
+      if (!blob) {
+        blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/jpeg', 0.84));
+      }
+      if (!blob) throw new Error('تعذر ضغط الصورة في المتصفح');
+      return blob;
+    }
+
+    async function uploadImageFile(file) {
+      const compressed = await compressToWebP(file);
+      const ext = compressed.type === 'image/webp' ? 'webp' : 'jpg';
+      const formData = new FormData();
+      formData.append('file', compressed, `photo.${ext}`);
+
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        headers: { 'x-admin-key': getAdminKey() },
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || 'فشل رفع الصورة');
+      }
+      return data.url;
+    }
+
+    // Toggle Upload vs Video URL controls
+    const typeSelect = document.getElementById('item-type');
+    const photoUploadWrap = document.getElementById('photo-upload-wrap');
+    const videoUrlWrap = document.getElementById('video-url-wrap');
+    const videoThumbWrap = document.getElementById('video-thumb-wrap');
+    const itemFileInput = document.getElementById('item-file');
+    const itemFileLabel = document.getElementById('item-file-label');
+    const itemPreviewWrap = document.getElementById('item-preview-wrap');
+    const itemPreviewImg = document.getElementById('item-preview-img');
+    const itemPreviewMeta = document.getElementById('item-preview-meta');
+    const itemSrcInput = document.getElementById('item-src');
+    let previewObjectUrl = '';
+
+    function syncMediaTypeFields() {
+      const isVideo = typeSelect?.value === 'video';
+      photoUploadWrap?.classList.toggle('hidden', isVideo);
+      videoUrlWrap?.classList.toggle('hidden', !isVideo);
+      videoThumbWrap?.classList.toggle('hidden', !isVideo);
+      if (itemSrcInput) itemSrcInput.required = isVideo;
+      if (isVideo) itemPreviewWrap?.classList.add('hidden');
+    }
+    typeSelect?.addEventListener('change', syncMediaTypeFields);
+    syncMediaTypeFields();
+
+    itemFileInput?.addEventListener('change', () => {
+      const file = itemFileInput.files?.[0];
+      if (!file) return;
+      if (previewObjectUrl) URL.revokeObjectURL(previewObjectUrl);
+      previewObjectUrl = URL.createObjectURL(file);
+      if (itemFileLabel) itemFileLabel.textContent = file.name;
+      if (itemPreviewImg) itemPreviewImg.src = previewObjectUrl;
+      if (itemPreviewMeta) {
+        itemPreviewMeta.textContent = `${file.name} (${Math.round(file.size / 1024)} KB قبل الضغط)`;
+      }
+      itemPreviewWrap?.classList.remove('hidden');
+    });
+
+    // Replace photo directly on an existing gallery item
+    const replaceInput = document.getElementById('replace-photo-input');
+    let replaceTargetIndex = -1;
+
+    function triggerReplacePhoto(index) {
+      replaceTargetIndex = index;
+      if (replaceInput) {
+        replaceInput.value = '';
+        replaceInput.click();
+      }
+    }
+
+    replaceInput?.addEventListener('change', async () => {
+      const file = replaceInput.files?.[0];
+      if (!file || replaceTargetIndex < 0 || !mediaData.items[replaceTargetIndex]) return;
+      const targetIndex = replaceTargetIndex;
+      replaceTargetIndex = -1;
+
+      showToast('جاري ضغط ورفع الصورة الجديدة...');
+      try {
+        const uploadedUrl = await uploadImageFile(file);
+        const target = mediaData.items[targetIndex];
+        if (target.type === 'video') {
+          target.thumbnail = uploadedUrl;
+        } else {
+          target.src = uploadedUrl;
+          target.thumbnail = uploadedUrl;
+        }
+        await saveState('تم تغيير الصورة وتحديث المعرض لكل الزوار.');
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : 'فشل تغيير الصورة.', true);
+      }
+    });
+
     const addForm = document.getElementById('add-media-form');
+    const addSubmitBtn = document.getElementById('add-media-submit');
     addForm?.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const type = document.getElementById('item-type').value;
+      const type = typeSelect.value;
       const category = document.getElementById('item-category').value;
-      let src = document.getElementById('item-src').value.trim();
       const title = document.getElementById('item-title').value.trim();
       const titleEn = document.getElementById('item-title-en').value.trim();
       const desc = document.getElementById('item-desc').value.trim();
-      let thumb = document.getElementById('item-thumb').value.trim();
 
-      if (type === 'video' && src.includes('watch?v=')) {
-        src = src.replace('watch?v=', 'embed/');
-      }
-      if (!thumb) {
-        thumb = type === 'video'
-          ? '/media/truck-loading-cairo.jpg'
-          : src;
-      }
+      let src = '';
+      let thumb = '';
 
-      mediaData.items.unshift({
-        id: Date.now().toString(),
-        type,
-        src,
-        thumbnail: thumb,
-        category,
-        title,
-        titleEn: titleEn || title,
-        alt: title,
-        altEn: titleEn || title,
-        desc,
-        descEn: desc,
-      });
-      await saveState('تمت إضافة العنصر وحفظ المعرض في قاعدة البيانات.');
-      addForm.reset();
+      if (addSubmitBtn) addSubmitBtn.disabled = true;
+      try {
+        if (type === 'image') {
+          const file = itemFileInput?.files?.[0];
+          if (!file) {
+            showToast('يرجى اختيار صورة من جهازك أولاً.', true);
+            return;
+          }
+          showToast('جاري ضغط ورفع الصورة...');
+          src = await uploadImageFile(file);
+          thumb = src;
+        } else {
+          src = itemSrcInput.value.trim();
+          if (src.includes('watch?v=')) {
+            src = src.replace('watch?v=', 'embed/');
+          }
+          const thumbFile = document.getElementById('item-thumb-file')?.files?.[0];
+          thumb = thumbFile ? await uploadImageFile(thumbFile) : '/media/truck-loading-cairo.jpg';
+        }
+
+        mediaData.items.unshift({
+          id: Date.now().toString(),
+          type,
+          src,
+          thumbnail: thumb,
+          category,
+          title,
+          titleEn: titleEn || title,
+          alt: title,
+          altEn: titleEn || title,
+          desc,
+          descEn: desc,
+        });
+        await saveState('تم رفع الصورة وإضافتها إلى المعرض بنجاح.');
+        addForm.reset();
+        syncMediaTypeFields();
+        if (itemFileLabel) itemFileLabel.textContent = 'اختر صورة من الهاتف أو الكمبيوتر...';
+        itemPreviewWrap?.classList.add('hidden');
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : 'فشل رفع الصورة.', true);
+      } finally {
+        if (addSubmitBtn) addSubmitBtn.disabled = false;
+      }
     });
 
     document.getElementById('copy-json-btn')?.addEventListener('click', () => {

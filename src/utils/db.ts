@@ -92,6 +92,15 @@ async function ensureSchemaAndSeed(db: D1Database): Promise<void> {
         created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
       )
     `),
+    db.prepare(`
+      CREATE TABLE IF NOT EXISTS uploaded_images (
+        id TEXT PRIMARY KEY,
+        mime_type TEXT NOT NULL,
+        data BLOB NOT NULL,
+        size_bytes INTEGER NOT NULL,
+        created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      )
+    `),
   ]);
 
   const settingsCount = await db
@@ -294,5 +303,79 @@ export async function replaceMediaItems(
   ];
 
   await db.batch(stmts);
+
+  // Prune uploaded images no longer referenced by any media item
+  const referencedIds = new Set<string>();
+  for (const item of clean) {
+    for (const field of [item.src, item.thumbnail]) {
+      const match = field.match(/^\/api\/images\/([a-zA-Z0-9-]+)$/);
+      if (match) referencedIds.add(match[1]);
+    }
+  }
+  const existing = await db.prepare('SELECT id FROM uploaded_images').all<{ id: string }>();
+  const orphanStmts = (existing.results || [])
+    .filter((row) => !referencedIds.has(row.id))
+    .map((row) => db.prepare('DELETE FROM uploaded_images WHERE id = ?').bind(row.id));
+  if (orphanStmts.length > 0) {
+    await db.batch(orphanStmts);
+  }
+
   return clean;
+}
+
+const MAX_UPLOAD_BYTES = 1_500_000;
+
+export async function saveUploadedImage(
+  db: D1Database,
+  bytes: Uint8Array,
+  mimeType: string
+): Promise<{ id: string; url: string; sizeBytes: number }> {
+  await ensureSchemaAndSeed(db);
+
+  if (!mimeType.startsWith('image/')) {
+    throw new Error('Only image files are allowed');
+  }
+  if (bytes.byteLength === 0 || bytes.byteLength > MAX_UPLOAD_BYTES) {
+    throw new Error('Image must be under 1.5 MB after compression');
+  }
+
+  const id = crypto.randomUUID();
+  await db
+    .prepare(
+      'INSERT INTO uploaded_images (id, mime_type, data, size_bytes) VALUES (?, ?, ?, ?)'
+    )
+    .bind(id, mimeType, bytes, bytes.byteLength)
+    .run();
+
+  return {
+    id,
+    url: `/api/images/${id}`,
+    sizeBytes: bytes.byteLength,
+  };
+}
+
+export async function getUploadedImage(
+  db: D1Database,
+  id: string
+): Promise<{ data: Uint8Array; mimeType: string } | null> {
+  await ensureSchemaAndSeed(db);
+  const row = await db
+    .prepare('SELECT mime_type, data FROM uploaded_images WHERE id = ?')
+    .bind(id)
+    .first<{ mime_type: string; data: unknown }>();
+
+  if (!row || !row.data) return null;
+
+  let bytes: Uint8Array;
+  if (row.data instanceof Uint8Array) {
+    bytes = row.data;
+  } else if (row.data instanceof ArrayBuffer) {
+    bytes = new Uint8Array(row.data);
+  } else if (Array.isArray(row.data)) {
+    bytes = new Uint8Array(row.data);
+  } else {
+    return null;
+  }
+
+  return { data: bytes, mimeType: row.mime_type || 'image/webp' };
 }
