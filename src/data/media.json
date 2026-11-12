@@ -1,0 +1,70 @@
+{
+  "items": [
+    {
+      "id": "1",
+      "type": "image",
+      "src": "/media/truck-loading-cairo.jpg",
+      "thumbnail": "/media/truck-loading-cairo.jpg",
+      "category": "moving",
+      "title": "رص وتثبيت الأثاث داخل السيارات المغلقة في القاهرة",
+      "titleEn": "Securing Wrapped Furniture Inside Enclosed Cairo Trucks",
+      "desc": "تثبيت القطع المغلفة بالبطاطين المبطنة وأحزمة الربط داخل سيارات صندوقية مجهزة لمنع أي حركة أثناء السير.",
+      "descEn": "Strapping blanket-wrapped pieces inside wooden-slatted box trucks for scratch-free transit."
+    },
+    {
+      "id": "2",
+      "type": "image",
+      "src": "/media/crew-packing-cairo.jpg",
+      "thumbnail": "/media/crew-packing-cairo.jpg",
+      "category": "team",
+      "title": "فريق التغليف أثناء تجهيز وتعبئة الأثاث داخل الشقة",
+      "titleEn": "Packing Crew Preparing Furniture & Fragiles Indoors",
+      "desc": "تغليف الزجاج والنجف والكراسي الخشبية بالبابلز الفقاعي والإسفنج وكرتون 5 طبقات بأيدي طاقم العمل.",
+      "descEn": "Technicians wrapping glass decor, armchairs, and wooden pieces in bubble wrap and 5-ply board."
+    },
+    {
+      "id": "3",
+      "type": "image",
+      "src": "/media/thermal-wrapping-work.jpg",
+      "thumbnail": "/media/thermal-wrapping-work.jpg",
+      "category": "packing",
+      "title": "تغليف حراري وحماية الزوايا للرخام والشاشات",
+      "titleEn": "Corner Guards & Thermal Stretch Wrapping for Marble",
+      "desc": "حماية أطراف طاولات الرخام والبراويز والشاشات بواقيات فوم وزوايا مبطنة مع استرتش حراري محكم.",
+      "descEn": "High-density foam corner guards, bubble padding, and thermal stretch film for marble and frames."
+    },
+    {
+      "id": "4",
+      "type": "image",
+      "src": "/media/carpentry-reassembly-work.jpg",
+      "thumbnail": "/media/carpentry-reassembly-work.jpg",
+      "category": "team",
+      "title": "فنيو النجارة أثناء فك وتركيب غرف النوم والمطابخ",
+      "titleEn": "Master Carpenters Reassembling Wardrobes & Bedrooms",
+      "desc": "فك وضبط مفصلات الدواليب وغرف النوم والمطابخ بأدوات كهربائية دقيقة في منزلك الجديد.",
+      "descEn": "Dedicated carpenters aligning wardrobe hinges and bedroom units cleanly in your new home."
+    },
+    {
+      "id": "5",
+      "type": "image",
+      "src": "/media/hydraulic-hoist-cairo.jpg",
+      "thumbnail": "/media/hydraulic-hoist-cairo.jpg",
+      "category": "moving",
+      "title": "ونش رفع هيدروليكي أثناء العمل للأدوار العليا في مصر",
+      "titleEn": "Hydraulic Hoist Operating at Cairo High-Floor Balconies",
+      "desc": "إنزال ورفع الصالونات والأجهزة الثقيلة مباشرة من الواجهات والشرفات بأمان بعيداً عن ضيق السلالم.",
+      "descEn": "Exterior balcony hoist lowering wrapped sofas safely away from tight apartment stairwells."
+    },
+    {
+      "id": "6",
+      "type": "image",
+      "src": "/media/secured-storage-facility.jpg",
+      "thumbnail": "/media/secured-storage-facility.jpg",
+      "category": "storage",
+      "title": "تخزين أثاث مغلف ومؤمن على طبليات داخل المستودعات",
+      "titleEn": "Palletized & Climate-Controlled Furniture Storage",
+      "desc": "تغطية كل قطعة بالبلاستيك المحكم ووضعها على طبليات مرتفعة داخل مستودعات منظمة ومراقبة 24/7.",
+      "descEn": "Individually sealed sofas and labeled cartons stacked cleanly on elevated pallets under 24/7 monitoring."
+    }
+  ]
+}

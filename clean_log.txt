@@ -1,0 +1,11 @@
+Cleaning node_modules...
+Running npm install...
+npm error Invalid Version: 
+npm error A complete log of this run can be found in: C:\Users\Adel Ahmed\AppData\Local\npm-cache\_logs\2026-09-28T03_05_34_494Z-debug-0.log
+Starting dev server...
+
+> fmoving@0.0.1 dev
+> astro dev --port 8080
+
+'astro' is not recognized as an internal or external command,
+operable program or batch file.

@@ -1,0 +1,63 @@
+---
+import { useTranslations } from '../i18n/ui';
+import { MessageCircle, Clock, Truck, Home } from '@lucide/astro';
+
+interface Props {
+  lang: 'ar' | 'en';
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+
+const steps = [
+  { icon: MessageCircle, title: t('steps.1'), desc: t('steps.1.desc'), num: '01' },
+  { icon: Clock, title: t('steps.2'), desc: t('steps.2.desc'), num: '02' },
+  { icon: Truck, title: t('steps.3'), desc: t('steps.3.desc'), num: '03' },
+  { icon: Home, title: t('steps.4'), desc: t('steps.4.desc'), num: '04' },
+];
+---
+
+<section id="howitworks" class="dark-surface scroll-mt-28 py-12 md:py-24 bg-primary-900 text-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Section Heading -->
+    <div class="max-w-2xl mb-7 md:mb-14 text-start">
+      <p class="text-xs sm:text-sm font-semibold text-accent-300 mb-2">
+        {t('steps.eyebrow')}
+      </p>
+      <h2 class="heading-section font-extrabold tracking-tight text-white">
+        {t('steps.title')}
+      </h2>
+    </div>
+
+    <!-- Connected Sequential Step Track -->
+    <ol class="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-6">
+      <!-- Desktop horizontal connector bar -->
+      <div
+        class="hidden lg:block absolute top-6 inset-x-10 h-px bg-white/20"
+        aria-hidden="true"
+      ></div>
+
+      {steps.map((step) => (
+        <li class="relative flex sm:flex-col items-start text-start gap-3.5 sm:gap-0 bg-primary-800/60 lg:bg-transparent p-4 sm:p-5 lg:p-0 rounded-2xl border border-white/10 lg:border-0">
+          <div class="flex items-center gap-2.5 sm:gap-3 sm:mb-4 relative z-10 shrink-0">
+            <span class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-accent-400 text-primary-900 font-mono font-extrabold text-sm flex items-center justify-center shadow-sm shrink-0 ring-4 ring-primary-900">
+              {step.num}
+            </span>
+            <span class="hidden sm:flex w-10 h-10 rounded-lg bg-white/10 text-accent-300 items-center justify-center shrink-0">
+              <step.icon class="w-5 h-5" aria-hidden="true" />
+            </span>
+          </div>
+
+          <div class="min-w-0">
+            <h3 class="text-base sm:text-lg font-bold text-white mb-1 sm:mb-2">
+              {step.title}
+            </h3>
+            <p class="text-slate-300 text-xs sm:text-sm leading-relaxed">
+              {step.desc}
+            </p>
+          </div>
+        </li>
+      ))}
+    </ol>
+  </div>
+</section>

@@ -1,0 +1,159 @@
+---
+import '../styles/global.css';
+import { useTranslations } from '../i18n/ui';
+
+interface Props {
+  title: string;
+  lang: 'ar' | 'en';
+  description?: string;
+}
+
+const { title, lang, description } = Astro.props;
+const t = useTranslations(lang);
+const dir = lang === 'ar' ? 'rtl' : 'ltr';
+const defaultDesc = lang === 'ar'
+  ? 'خدمة نقل أثاث احترافية في كل محافظات مصر. فك وتركيب، تغليف حراري، أوناش هيدروليكية، نقل محلي وسريع بأمان تام. احجز عبر واتساب.'
+  : 'Professional furniture moving service across Egypt. Dismantling, protective wrapping, hydraulic hoists, local and intercity moving. Book via WhatsApp.';
+const metaDesc = description || defaultDesc;
+---
+
+<!doctype html>
+<html lang={lang} dir={dir}>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+
+    <!-- SEO Meta Tags -->
+    <meta name="description" content={metaDesc} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={metaDesc} />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content={lang === 'ar' ? 'ar_EG' : 'en_US'} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={metaDesc} />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href={Astro.url.href} />
+
+    <!-- Google Fonts: Arabic (IBM Plex Sans Arabic + Cairo Display) & English (Plus Jakarta Sans + Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body class="overflow-x-hidden min-h-screen flex flex-col bg-surface-warm text-slate-800">
+    <a href="#main-content" class="skip-link visually-hidden">
+      {t('skip.content')}
+    </a>
+
+    <slot />
+
+    <!-- Back to Top Button (State-driven visibility) -->
+    <button
+      type="button"
+      id="back-to-top"
+      class="fixed bottom-5 ltr:left-5 rtl:right-5 z-40 hidden sm:inline-flex items-center justify-center w-11 h-11 rounded-full bg-primary-900 hover:bg-primary text-white border border-white/20 shadow-lg transition-all duration-200 opacity-0 invisible translate-y-2"
+      aria-label={t('backtop')}
+    >
+      <svg class="w-5 h-5" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.25" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M5 15l7-7 7 7" />
+      </svg>
+    </button>
+
+    <script>
+      // Sync contact settings from localStorage if updated in /admin
+      try {
+        const customSettings = JSON.parse(localStorage.getItem('mover_settings') || 'null');
+        if (customSettings) {
+          if (customSettings.phone) {
+            document.querySelectorAll('[data-contact-tel]').forEach((el) => {
+              el.setAttribute('href', `tel:${customSettings.phone}`);
+            });
+            document.querySelectorAll('[data-contact-phone-display]').forEach((el) => {
+              el.textContent = customSettings.displayPhone || customSettings.phone;
+            });
+          }
+          if (customSettings.whatsappNumber) {
+            document.querySelectorAll('[data-contact-whatsapp]').forEach((el) => {
+              const currentHref = el.getAttribute('href') || '';
+              const matchText = currentHref.match(/text=([^&]+)/);
+              const queryText = matchText ? `?text=${matchText[1]}` : '';
+              el.setAttribute('href', `https://wa.me/${customSettings.whatsappNumber}${queryText}`);
+            });
+
+            const waDigits = String(customSettings.whatsappNumber).replace(/\D/g, '');
+            const waFormatted = customSettings.whatsappNumber === customSettings.phone && customSettings.displayPhone
+              ? customSettings.displayPhone
+              : (waDigits.startsWith('20') && waDigits.length === 12
+                ? `+${waDigits.slice(0, 2)} ${waDigits.slice(2, 5)} ${waDigits.slice(5, 8)} ${waDigits.slice(8)}`
+                : `+${waDigits || customSettings.whatsappNumber}`);
+            document.querySelectorAll('[data-contact-whatsapp-display]').forEach((el) => {
+              el.textContent = waFormatted;
+            });
+          }
+          if (customSettings.workingHours) {
+            document.querySelectorAll('[data-contact-hours]').forEach((el) => {
+              el.textContent = customSettings.workingHours;
+            });
+          }
+
+          // Sync Top Bar visibility & Social Media links
+          const topBarRoot = document.querySelector('[data-topbar-root]');
+          if (topBarRoot && customSettings.topBar) {
+            topBarRoot.classList.toggle('hidden', customSettings.topBar.enabled === false);
+          }
+
+          if (customSettings.social && typeof customSettings.social === 'object') {
+            ['facebook', 'instagram', 'tiktok', 'youtube'].forEach((key) => {
+              const rawUrl = (customSettings.social[key] || '').trim();
+              let safeHref = '';
+              if (rawUrl) {
+                try {
+                  const parsed = new URL(rawUrl, window.location.origin);
+                  if (parsed.protocol === 'http:' || parsed.protocol === 'https:') {
+                    safeHref = parsed.href;
+                  }
+                } catch {}
+              }
+              document.querySelectorAll(`[data-social-key="${key}"]`).forEach((link) => {
+                if (safeHref) {
+                  link.setAttribute('href', safeHref);
+                  link.classList.remove('hidden');
+                } else {
+                  link.classList.add('hidden');
+                }
+              });
+            });
+          }
+        }
+      } catch (e) {
+        console.error(e);
+      }
+
+      // Back to top button visibility on scroll
+      const backToTopBtn = document.getElementById('back-to-top');
+      if (backToTopBtn) {
+        const updateBackTop = () => {
+          const visible = window.scrollY > 450;
+          backToTopBtn.classList.toggle('opacity-0', !visible);
+          backToTopBtn.classList.toggle('invisible', !visible);
+          backToTopBtn.classList.toggle('translate-y-2', !visible);
+          backToTopBtn.classList.toggle('opacity-100', visible);
+          backToTopBtn.classList.toggle('visible', visible);
+          backToTopBtn.classList.toggle('translate-y-0', visible);
+        };
+        window.addEventListener('scroll', updateBackTop, { passive: true });
+        updateBackTop();
+        backToTopBtn.addEventListener('click', () => {
+          const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
+        });
+      }
+    </script>
+  </body>
+</html>

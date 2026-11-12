@@ -1,0 +1,36 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Hero from '../../components/Hero.astro';
+import MediaGallery from '../../components/MediaGallery.astro';
+import Stats from '../../components/Stats.astro';
+import Services from '../../components/Services.astro';
+import WhyUs from '../../components/WhyUs.astro';
+import HowItWorks from '../../components/HowItWorks.astro';
+import Areas from '../../components/Areas.astro';
+import Testimonials from '../../components/Testimonials.astro';
+import FAQ from '../../components/FAQ.astro';
+import CTABanner from '../../components/CTABanner.astro';
+import WhatsAppButton from '../../components/WhatsAppButton.astro';
+import Footer from '../../components/Footer.astro';
+
+const lang = 'en';
+---
+
+<Layout title="Al Walaa Moving | Professional Furniture Moving & Packing" lang={lang}>
+  <Header lang={lang} />
+  <main id="main-content" tabindex="-1">
+    <Hero lang={lang} />
+    <MediaGallery lang={lang} />
+    <Stats lang={lang} />
+    <Services lang={lang} />
+    <WhyUs lang={lang} />
+    <HowItWorks lang={lang} />
+    <Areas lang={lang} />
+    <Testimonials lang={lang} />
+    <FAQ lang={lang} />
+    <CTABanner lang={lang} />
+  </main>
+  <WhatsAppButton lang={lang} />
+  <Footer lang={lang} />
+</Layout>

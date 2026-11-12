@@ -1,0 +1,117 @@
+---
+import { useTranslations } from '../i18n/ui';
+import settings from '../data/settings.json';
+import { MapPin, Navigation } from '@lucide/astro';
+
+interface Props {
+  lang: 'ar' | 'en';
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const isAr = lang === 'ar';
+
+const regionsAr = [
+  {
+    name: 'القاهرة الكبرى',
+    cities: ['مدينة نصر', 'التجمع الأول والخامس', 'المعادي', 'مصر الجديدة', 'الشيخ زايد', '6 أكتوبر', 'الهرم وفيصل', 'المهندسين'],
+  },
+  {
+    name: 'الإسكندرية والساحل',
+    cities: ['سموحة', 'ميامي وسيدي بشر', 'لوران وجليم', 'العجمي والبيطاش', 'الساحل الشمالي', 'العلمين الجديدة', 'مرسى مطروح'],
+  },
+  {
+    name: 'محافظات الدلتا والقناة',
+    cities: ['المنصورة (الدقهلية)', 'طنطا (الغربية)', 'الزقازيق (الشرقية)', 'شبين الكوم', 'بورسعيد', 'الإسماعيلية', 'السويس'],
+  },
+  {
+    name: 'محافظات الصعيد والبحر الأحمر',
+    cities: ['الفيوم', 'بني سويف', 'المنيا', 'أسيوط', 'سوهاج', 'قنا والأقصر', 'أسوان', 'الغردقة وشرم الشيخ'],
+  },
+];
+
+const regionsEn = [
+  {
+    name: 'Greater Cairo & Giza',
+    cities: ['Nasr City', 'New Cairo & 5th Settlement', 'Maadi', 'Heliopolis', 'Sheikh Zayed', '6th of October', 'Haram & Faisal', 'Mohandessin'],
+  },
+  {
+    name: 'Alexandria & North Coast',
+    cities: ['Smouha', 'Miami & Sidi Bishr', 'Louran & Gleem', 'Agami', 'North Coast', 'New Alamein', 'Marsa Matrouh'],
+  },
+  {
+    name: 'Delta & Canal Cities',
+    cities: ['Mansoura', 'Tanta', 'Zagazig', 'Shebin El Kom', 'Port Said', 'Ismailia', 'Suez'],
+  },
+  {
+    name: 'Upper Egypt & Red Sea',
+    cities: ['Fayoum', 'Beni Suef', 'Minya', 'Asyut', 'Sohag', 'Qena & Luxor', 'Aswan', 'Hurghada & Sharm'],
+  },
+];
+
+const regions = isAr ? regionsAr : regionsEn;
+const coverageMsg = isAr
+  ? encodeURIComponent('مرحباً، أريد تأكيد تغطية منطقتي وتحديد موعد نقل')
+  : encodeURIComponent('Hello, I would like to confirm coverage for my area and check availability');
+const whatsappLink = `https://wa.me/${settings.whatsappNumber}?text=${coverageMsg}`;
+---
+
+<section id="areas" class="scroll-mt-28 py-12 md:py-24 bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Section Heading -->
+    <div class="max-w-2xl mb-7 md:mb-12 text-start">
+      <p class="text-xs sm:text-sm font-semibold text-accent mb-2">
+        {t('areas.eyebrow')}
+      </p>
+      <h2 class="heading-section font-extrabold text-primary-900 tracking-tight">
+        {t('areas.title')}
+      </h2>
+      <p class="prose-pretty mt-2.5 text-slate-600 text-sm sm:text-lg leading-relaxed">
+        {t('areas.subtitle')}
+      </p>
+    </div>
+
+    <!-- Regions Directory -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+      {regions.map((region) => (
+        <div class="bg-surface-warm rounded-2xl p-4 sm:p-6 border border-stone-200">
+          <h3 class="text-base sm:text-lg font-bold text-primary-900 flex items-center gap-2 pb-3 mb-3.5 border-b border-stone-200">
+            <MapPin class="w-4 h-4 sm:w-5 sm:h-5 text-accent shrink-0" aria-hidden="true" />
+            <span>{region.name}</span>
+          </h3>
+
+          <ul class="flex flex-wrap gap-1.5 sm:gap-2">
+            {region.cities.map((city) => (
+              <li class="px-2.5 sm:px-3 py-1 sm:py-1.5 bg-white rounded-lg border border-stone-200 text-slate-700 font-medium text-xs sm:text-sm">
+                {city}
+              </li>
+            ))}
+          </ul>
+        </div>
+      ))}
+    </div>
+
+    <!-- Dispatch Confirmation Banner -->
+    <div class="dark-surface mt-6 sm:mt-8 bg-primary-900 text-white rounded-2xl p-5 sm:p-8 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 sm:gap-5">
+      <div class="flex items-start sm:items-center gap-3.5 sm:gap-4 text-start">
+        <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white/10 flex items-center justify-center shrink-0">
+          <Navigation class="w-5 h-5 text-accent-300" aria-hidden="true" />
+        </div>
+        <div>
+          <h3 class="text-base sm:text-lg font-bold text-white">{t('areas.ctaTitle')}</h3>
+          <p class="text-xs sm:text-sm text-slate-300 mt-1">{t('areas.ctaDesc')}</p>
+        </div>
+      </div>
+
+      <a
+        href={whatsappLink}
+        data-contact-whatsapp
+        target="_blank"
+        rel="noopener noreferrer"
+        class="inline-flex items-center justify-center bg-accent-400 hover:bg-accent-300 text-primary-900 font-extrabold px-6 py-3 rounded-xl text-sm shadow-sm transition-colors shrink-0 min-h-[44px]"
+      >
+        {t('areas.ctaBtn')}
+      </a>
+    </div>
+  </div>
+</section>

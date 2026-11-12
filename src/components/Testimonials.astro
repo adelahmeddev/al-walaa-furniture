@@ -1,0 +1,207 @@
+---
+import { useTranslations } from '../i18n/ui';
+import { Star, CheckCircle } from '@lucide/astro';
+
+interface Props {
+  lang: 'ar' | 'en';
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const isAr = lang === 'ar';
+
+const reviewsAr = [
+  {
+    name: 'المهندس أحمد ممدوح',
+    location: 'التجمع الخامس ← الشيخ زايد',
+    text: 'تجربة ممتازة جداً فوق الوصف. الفريق وصل في الموعد بالظبط ومعاهم الونش وخامات التغليف. غلفوا النجف والرخام بكل عناية ومافيش خدش واحد في الخشب.',
+    service: 'نقل فيلا كاملة + ونش هيدروليكي',
+    time: 'منذ يومين',
+  },
+  {
+    name: 'د. سارة عبد الرحمن',
+    location: 'مدينة نصر ← المعادي',
+    text: 'أفضل شركة نقل اتعاملت معاها في مصر. النجارين شطار جداً فكوا المطبخ والدريسنج روم وركبوها في الشقة الجديدة بدقة، والسعر كان محدد من البداية بدون أي طلبات زيادة.',
+    service: 'فك وتركيب + تغليف',
+    time: 'منذ 5 أيام',
+  },
+  {
+    name: 'أ/ محمد إبراهيم حسن',
+    location: 'القاهرة ← الإسكندرية (سموحة)',
+    text: 'كنت شايل هم السفر والنقل بين المحافظات، بس السيارة المقفولة وتثبيت الأثاث ريحني تماماً. كل القطع وصلت نظيفة وسليمة في الموعد المتفق عليه.',
+    service: 'نقل بين المحافظات',
+    time: 'منذ أسبوع',
+  },
+  {
+    name: 'م/ طارق السعيد',
+    location: 'المهندسين ← 6 أكتوبر',
+    text: 'الأمانة والالتزام بالمواعيد أهم ميزة عندهم. نقلوا أجهزة كهربائية وشاشات 75 بوصة مع تغليف دبل بابلز، وكل حاجة وصلت سليمة وركبوها وجربوها للتأكد.',
+    service: 'نقل أجهزة حساسة وثقيلة',
+    time: 'منذ أسبوعين',
+  },
+  {
+    name: 'أ/ هبة مصطفى',
+    location: 'مصر الجديدة ← الرحاب',
+    text: 'دي المرة التانية اللي بستعين بيهم لنقل شقة الوالدة. الفريق صبور ومتعاون مع كبار السن وبيحط كل كرتونة في الغرفة المحددة لها.',
+    service: 'نقل وتفريغ وتنسيق أثاث',
+    time: 'منذ 3 أسابيع',
+  },
+];
+
+const reviewsEn = [
+  {
+    name: 'Eng. Ahmed Mamdouh',
+    location: 'New Cairo → Sheikh Zayed',
+    text: 'The crew arrived right on schedule with the exterior hydraulic hoist and packing rolls. Chandeliers and marble tops were wrapped carefully and arrived without a single mark.',
+    service: 'Full Villa Relocation + Winch',
+    time: '2 days ago',
+  },
+  {
+    name: 'Dr. Sara Abdelrahman',
+    location: 'Nasr City → Maadi',
+    text: 'Their carpenters dismantled our fitted kitchen and dressing room cleanly and rebuilt everything accurately at the new apartment. Pricing matched the upfront quote exactly.',
+    service: 'Assembly & Custom Packing',
+    time: '5 days ago',
+  },
+  {
+    name: 'Mohamed Ibrahim',
+    location: 'Cairo → Alexandria',
+    text: 'I was worried about intercity transit, but their enclosed box truck and proper internal bracing kept everything secure on the highway. Smooth arrival right on time.',
+    service: 'Intercity Long Distance',
+    time: '1 week ago',
+  },
+  {
+    name: 'Tarek El-Saeed',
+    location: 'Mohandessin → 6th of October',
+    text: 'Punctual and thorough. They wrapped 75-inch TVs and heavy appliances in double-layer bubble wrap, delivered them intact, and reconnected everything before leaving.',
+    service: 'Heavy & Sensitive Appliances',
+    time: '2 weeks ago',
+  },
+  {
+    name: 'Heba Mostafa',
+    location: 'Heliopolis → Al Rehab',
+    text: 'Second time booking with them, this time for my mother’s apartment. Patient, respectful crew who placed every labeled carton inside the right room.',
+    service: 'Full Home Packing & Placement',
+    time: '3 weeks ago',
+  },
+];
+
+const reviews = isAr ? reviewsAr : reviewsEn;
+const [featuredReview, ...gridReviews] = reviews;
+
+function getInitial(name: string): string {
+  return name.replace(/^(المهندس|د\.|أ\/|م\/|Eng\.|Dr\.)\s*/, '')[0] || 'M';
+}
+---
+
+<section id="testimonials" class="scroll-mt-28 py-12 md:py-24 bg-surface-warm border-y border-stone-200">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Section Heading -->
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 sm:gap-6 mb-7 md:mb-12 text-start">
+      <div class="max-w-2xl">
+        <p class="text-xs sm:text-sm font-semibold text-accent mb-2 flex items-center gap-2">
+          <span class="inline-flex text-amber-500 gap-0.5" aria-hidden="true">
+            <Star class="w-4 h-4 fill-amber-500" />
+            <Star class="w-4 h-4 fill-amber-500" />
+            <Star class="w-4 h-4 fill-amber-500" />
+            <Star class="w-4 h-4 fill-amber-500" />
+            <Star class="w-4 h-4 fill-amber-500" />
+          </span>
+          <span>{t('testimonials.eyebrow')}</span>
+        </p>
+        <h2 class="heading-section font-extrabold text-primary-900 tracking-tight">
+          {t('testimonials.title')}
+        </h2>
+        <p class="prose-pretty mt-2.5 text-slate-600 text-sm sm:text-lg leading-relaxed">
+          {t('testimonials.subtitle')}
+        </p>
+      </div>
+    </div>
+
+    <!-- Lead Featured Testimonial -->
+    {featuredReview && (
+      <article class="bg-primary-900 dark-surface text-white rounded-2xl p-5 sm:p-8 mb-4 sm:mb-6">
+        <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 sm:gap-6">
+          <div class="max-w-3xl">
+            <div class="flex items-center gap-3 mb-3 sm:mb-4">
+              <div class="flex text-amber-300 gap-0.5" aria-label="5 out of 5 stars">
+                <Star class="w-4 h-4 fill-amber-300" aria-hidden="true" />
+                <Star class="w-4 h-4 fill-amber-300" aria-hidden="true" />
+                <Star class="w-4 h-4 fill-amber-300" aria-hidden="true" />
+                <Star class="w-4 h-4 fill-amber-300" aria-hidden="true" />
+                <Star class="w-4 h-4 fill-amber-300" aria-hidden="true" />
+              </div>
+              <span class="text-xs font-medium text-slate-300">{featuredReview.service}</span>
+            </div>
+
+            <blockquote class="text-sm sm:text-xl font-medium text-white leading-relaxed">
+              “{featuredReview.text}”
+            </blockquote>
+          </div>
+
+          <div class="flex items-center gap-3.5 pt-3.5 lg:pt-0 border-t lg:border-t-0 border-white/15 shrink-0">
+            <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-accent-400 text-primary-900 font-extrabold text-sm sm:text-base flex items-center justify-center shrink-0">
+              {getInitial(featuredReview.name)}
+            </div>
+            <div>
+              <div class="font-bold text-white text-sm flex items-center gap-1.5">
+                <span>{featuredReview.name}</span>
+                <CheckCircle class="w-4 h-4 text-emerald-300" aria-hidden="true" />
+              </div>
+              <div class="text-xs text-slate-300 mt-0.5">
+                {featuredReview.location} · {featuredReview.time}
+              </div>
+            </div>
+          </div>
+        </div>
+      </article>
+    )}
+
+    <!-- Supporting Testimonials (Horizontal swipe cards on mobile -> balanced 2x2 grid on md+) -->
+    <div class="flex overflow-x-auto snap-x snap-mandatory gap-3.5 pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:pb-0 md:grid md:grid-cols-2 md:gap-6">
+      {gridReviews.map((review) => (
+        <article class="w-[84vw] max-w-[330px] shrink-0 snap-center md:w-auto md:max-w-none bg-white rounded-2xl p-5 sm:p-6 border border-stone-200 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between gap-3 mb-3.5">
+              <div class="flex text-amber-500 gap-0.5" aria-label="5 out of 5 stars">
+                <Star class="w-4 h-4 fill-amber-500" aria-hidden="true" />
+                <Star class="w-4 h-4 fill-amber-500" aria-hidden="true" />
+                <Star class="w-4 h-4 fill-amber-500" aria-hidden="true" />
+                <Star class="w-4 h-4 fill-amber-500" aria-hidden="true" />
+                <Star class="w-4 h-4 fill-amber-500" aria-hidden="true" />
+              </div>
+              <span class="text-xs font-medium text-slate-600">
+                {review.time}
+              </span>
+            </div>
+
+            <blockquote class="text-slate-700 text-sm sm:text-base leading-relaxed mb-5">
+              “{review.text}”
+            </blockquote>
+          </div>
+
+          <div class="border-t border-stone-100 pt-4 flex items-center justify-between gap-3">
+            <div class="flex items-center gap-3 min-w-0">
+              <div class="w-10 h-10 rounded-full bg-primary-900 text-white font-bold text-sm flex items-center justify-center shrink-0">
+                {getInitial(review.name)}
+              </div>
+              <div class="min-w-0">
+                <div class="font-bold text-slate-900 text-sm flex items-center gap-1.5 truncate">
+                  <span>{review.name}</span>
+                  <CheckCircle class="w-3.5 h-3.5 text-whatsapp shrink-0" aria-hidden="true" />
+                </div>
+                <div class="text-xs text-slate-600 truncate">
+                  {review.location}
+                </div>
+              </div>
+            </div>
+
+            <span class="hidden sm:inline-block text-[11px] font-semibold bg-surface-warm border border-stone-200 text-slate-700 px-2.5 py-1 rounded-md shrink-0">
+              {t('testimonials.verified')}
+            </span>
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>

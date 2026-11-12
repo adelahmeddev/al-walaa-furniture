@@ -1,0 +1,73 @@
+---
+import { useTranslations } from '../i18n/ui';
+import settings from '../data/settings.json';
+import { Phone, MessageCircle } from '@lucide/astro';
+
+interface Props {
+  lang: 'ar' | 'en';
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const isAr = lang === 'ar';
+
+const phone = settings.phone;
+const message = isAr
+  ? encodeURIComponent('مرحباً، أود حجز خدمة نقل عفش')
+  : encodeURIComponent('Hello, I would like to book a furniture moving service');
+const whatsappLink = `https://wa.me/${settings.whatsappNumber}?text=${message}`;
+---
+
+<!-- Desktop Floating Corner Actions (Non-intrusive, focus & hover accessible) -->
+<div class="hidden sm:flex flex-col gap-3 fixed bottom-5 ltr:right-5 rtl:left-5 z-40">
+  <a
+    href={`tel:${phone}`}
+    data-contact-tel
+    class="relative bg-primary-900 hover:bg-primary text-white w-12 h-12 rounded-full shadow-lg border border-white/15 flex items-center justify-center transition-colors group"
+    aria-label={t('hero.call')}
+  >
+    <Phone class="w-5 h-5 text-accent-300" aria-hidden="true" />
+    <span class="pointer-events-none absolute ltr:right-full rtl:left-full ltr:mr-3 rtl:ml-3 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-primary-900 text-white border border-white/15 rounded-lg shadow-lg text-xs font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity">
+      {t('hero.call')}
+    </span>
+  </a>
+
+  <a
+    href={whatsappLink}
+    data-contact-whatsapp
+    target="_blank"
+    rel="noopener noreferrer"
+    class="relative bg-whatsapp hover:bg-whatsapp-hover text-white w-14 h-14 rounded-full shadow-xl flex items-center justify-center transition-colors group"
+    aria-label={t('whatsapp.btn')}
+  >
+    <MessageCircle class="w-7 h-7" aria-hidden="true" />
+    <span class="pointer-events-none absolute ltr:right-full rtl:left-full ltr:mr-3 rtl:ml-3 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-primary-900 text-white border border-white/15 rounded-lg shadow-lg text-xs font-semibold whitespace-nowrap opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity">
+      {t('whatsapp.btn')}
+    </span>
+  </a>
+</div>
+
+<!-- Mobile Docked Bottom Action Bar (Prevents corner buttons from obscuring cards & forms) -->
+<div class="sm:hidden fixed bottom-0 inset-x-0 z-40 bg-white/95 backdrop-blur-sm border-t border-stone-200 px-3 pt-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom))] shadow-[0_-6px_24px_rgba(8,27,51,0.1)]">
+  <div class="grid grid-cols-2 gap-2.5 max-w-md mx-auto">
+    <a
+      href={whatsappLink}
+      data-contact-whatsapp
+      target="_blank"
+      rel="noopener noreferrer"
+      class="flex items-center justify-center gap-2 bg-whatsapp hover:bg-whatsapp-hover text-white font-bold text-sm py-3 px-3 rounded-xl min-h-[46px] transition-colors shadow-sm"
+    >
+      <MessageCircle class="w-4 h-4 shrink-0" aria-hidden="true" />
+      <span class="truncate">{t('whatsapp.btn')}</span>
+    </a>
+
+    <a
+      href={`tel:${phone}`}
+      data-contact-tel
+      class="flex items-center justify-center gap-2 bg-primary-900 hover:bg-primary text-white font-bold text-sm py-3 px-3 rounded-xl min-h-[46px] transition-colors shadow-sm"
+    >
+      <Phone class="w-4 h-4 text-accent-300 shrink-0" aria-hidden="true" />
+      <span class="truncate">{t('hero.call')}</span>
+    </a>
+  </div>
+</div>

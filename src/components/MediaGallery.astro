@@ -1,0 +1,341 @@
+---
+import { useTranslations } from '../i18n/ui';
+import defaultMedia from '../data/media.json';
+import { Play, X, Maximize2, ArrowLeft, ArrowRight } from '@lucide/astro';
+
+interface Props {
+  lang: 'ar' | 'en';
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const isAr = lang === 'ar';
+
+const items = defaultMedia.items;
+
+function getCategoryLabel(cat: string): string {
+  switch (cat) {
+    case 'moving': return t('gallery.cat.moving');
+    case 'packing': return t('gallery.cat.packing');
+    case 'team': return t('gallery.cat.team');
+    case 'storage': return t('gallery.cat.storage');
+    default: return t('gallery.cat.moving');
+  }
+}
+
+const i18nClient = {
+  lang,
+  videoBadge: t('gallery.videoBadge'),
+  photoBadge: t('gallery.photoBadge'),
+  watchVideo: t('gallery.watchVideo'),
+  zoom: t('gallery.zoom'),
+  categories: {
+    moving: t('gallery.cat.moving'),
+    packing: t('gallery.cat.packing'),
+    team: t('gallery.cat.team'),
+    storage: t('gallery.cat.storage'),
+  },
+};
+---
+
+<section id="gallery" class="scroll-mt-28 py-12 md:py-24 bg-surface-warm border-b border-stone-200">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Section Header -->
+    <div class="max-w-2xl mb-7 md:mb-12 text-start">
+      <p class="text-xs sm:text-sm font-semibold text-accent mb-2">
+        {t('gallery.eyebrow')}
+      </p>
+      <h2 class="heading-section font-extrabold text-primary-900 tracking-tight">
+        {t('gallery.title')}
+      </h2>
+      <p class="prose-pretty mt-2.5 text-slate-600 text-sm sm:text-lg leading-relaxed">
+        {t('gallery.subtitle')}
+      </p>
+    </div>
+
+    <!-- Editorial Bento Media Grid (Horizontal swipe carousel on mobile -> desktop bento grid) -->
+    <div class="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-3 -mx-4 px-4 md:mx-0 md:px-0 md:pb-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-6" id="media-grid">
+      {items.map((item, index) => {
+        const itemTitle = isAr ? item.title : (item.titleEn || item.title);
+        const itemDesc = isAr ? item.desc : (item.descEn || item.desc);
+        const isVideo = item.type === 'video';
+        const isFeatured = index === 0;
+        const catLabel = getCategoryLabel(item.category);
+
+        return (
+          <article
+            class={`w-[82vw] max-w-[330px] shrink-0 snap-center md:w-auto md:max-w-none bg-white rounded-2xl overflow-hidden border border-stone-200 shadow-xs hover:shadow-card-hover transition-shadow duration-200 flex flex-col ${
+              isFeatured ? 'md:col-span-2 lg:col-span-2 lg:row-span-2' : ''
+            }`}
+          >
+            <button
+              type="button"
+              class="media-trigger group flex flex-col flex-1 w-full text-start cursor-pointer"
+              data-type={item.type}
+              data-src={item.src}
+              data-title={itemTitle}
+              data-desc={itemDesc}
+            >
+              <div
+                class={`relative w-full overflow-hidden bg-primary-900 ${
+                  isFeatured ? 'aspect-[16/10] lg:aspect-auto lg:min-h-[340px] lg:flex-1' : 'aspect-[16/10]'
+                }`}
+              >
+                <img
+                  src={item.thumbnail || item.src}
+                  alt={itemTitle}
+                  width="800"
+                  height="500"
+                  loading="lazy"
+                  class="w-full h-full object-cover object-center group-hover:scale-[1.03] transition-transform duration-300"
+                />
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-transparent to-transparent" aria-hidden="true"></div>
+
+                <!-- Media Type Pill -->
+                <span
+                  class={`absolute top-3.5 start-3.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold shadow-sm ${
+                    isVideo ? 'bg-red-700 text-white' : 'bg-primary-900/90 text-white'
+                  }`}
+                >
+                  {isVideo ? t('gallery.videoBadge') : t('gallery.photoBadge')}
+                </span>
+
+                <!-- Center Trigger Icon -->
+                <span
+                  class="absolute inset-0 flex items-center justify-center pointer-events-none"
+                  aria-hidden="true"
+                >
+                  {isVideo ? (
+                    <span class="w-14 h-14 rounded-full bg-red-700 text-white flex items-center justify-center shadow-lg group-hover:bg-red-600 group-hover:scale-105 transition-all duration-200">
+                      <Play class="w-6 h-6 fill-white translate-x-0.5" />
+                    </span>
+                  ) : (
+                    <span class="w-11 h-11 rounded-full bg-primary-900/80 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity duration-200">
+                      <Maximize2 class="w-5 h-5" />
+                    </span>
+                  )}
+                </span>
+              </div>
+
+              <div class="p-5 sm:p-6 flex flex-col justify-between flex-shrink-0">
+                <div>
+                  <span class="block text-xs font-semibold text-accent mb-1.5">
+                    {catLabel}
+                  </span>
+                  <h3 class={`font-bold text-slate-900 group-hover:text-accent transition-colors leading-snug mb-1.5 ${
+                    isFeatured ? 'text-lg sm:text-xl' : 'text-base sm:text-lg'
+                  }`}>
+                    {itemTitle}
+                  </h3>
+                  <p class="text-sm text-slate-600 leading-relaxed line-clamp-2">
+                    {itemDesc}
+                  </p>
+                </div>
+
+                <div class="mt-4 pt-3.5 border-t border-stone-100 flex items-center justify-between text-xs font-bold text-primary-900 group-hover:text-accent transition-colors">
+                  <span>{isVideo ? t('gallery.watchVideo') : t('gallery.zoom')}</span>
+                  {isAr ? <ArrowLeft class="w-4 h-4" aria-hidden="true" /> : <ArrowRight class="w-4 h-4" aria-hidden="true" />}
+                </div>
+              </div>
+            </button>
+          </article>
+        );
+      })}
+    </div>
+  </div>
+
+  <!-- Native Modal Lightbox Dialog -->
+  <dialog
+    id="lightbox-modal"
+    closedby="any"
+    aria-labelledby="lightbox-title"
+    class="lightbox-dialog dark-surface m-auto w-[calc(100%-2rem)] max-w-4xl max-h-[90dvh] rounded-2xl bg-primary-900 text-white border border-white/15 p-0 shadow-2xl overflow-hidden"
+  >
+    <div class="flex flex-col max-h-[90dvh]">
+      <div class="flex items-start justify-between gap-4 px-5 py-4 border-b border-white/15 bg-primary-900">
+        <div class="min-w-0 text-start">
+          <h3 id="lightbox-title" class="text-base sm:text-lg font-bold text-white truncate"></h3>
+          <p id="lightbox-desc" class="text-xs sm:text-sm text-slate-300 mt-0.5 line-clamp-2"></p>
+        </div>
+        <button
+          type="button"
+          id="lightbox-close"
+          autofocus
+          class="shrink-0 min-w-[44px] min-h-[44px] inline-flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 text-white transition-colors"
+          aria-label={t('gallery.close')}
+        >
+          <X class="w-5 h-5" aria-hidden="true" />
+        </button>
+      </div>
+
+      <div
+        id="lightbox-media-container"
+        class="flex-1 min-h-[260px] sm:min-h-[420px] bg-black flex items-center justify-center overflow-auto"
+      ></div>
+    </div>
+  </dialog>
+</section>
+
+<script define:vars={{ i18nClient }}>
+  // Safe DOM builder if media was customized in /admin
+  try {
+    const customMedia = JSON.parse(localStorage.getItem('mover_custom_media') || 'null');
+    if (customMedia && Array.isArray(customMedia.items) && customMedia.items.length > 0) {
+      const grid = document.getElementById('media-grid');
+      if (grid) {
+        grid.replaceChildren();
+        const isAr = i18nClient.lang === 'ar';
+
+        customMedia.items.forEach((item, index) => {
+          const isVideo = item.type === 'video';
+          const isFeatured = index === 0;
+          const title = isAr ? item.title : (item.titleEn || item.title);
+          const desc = isAr ? (item.desc || '') : (item.descEn || item.desc || '');
+          const thumb = item.thumbnail || item.src;
+          const catLabel = i18nClient.categories[item.category] || i18nClient.categories.moving;
+
+          const article = document.createElement('article');
+          article.className = `w-[82vw] max-w-[330px] shrink-0 snap-center md:w-auto md:max-w-none bg-white rounded-2xl overflow-hidden border border-stone-200 shadow-xs hover:shadow-card-hover transition-shadow duration-200 flex flex-col${
+            isFeatured ? ' md:col-span-2 lg:col-span-2 lg:row-span-2' : ''
+          }`;
+
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'media-trigger group flex flex-col flex-1 w-full text-start cursor-pointer';
+          btn.dataset.type = item.type || 'image';
+          btn.dataset.src = item.src || '';
+          btn.dataset.title = title || '';
+          btn.dataset.desc = desc;
+
+          const mediaWrap = document.createElement('div');
+          mediaWrap.className = `relative w-full overflow-hidden bg-primary-900 ${
+            isFeatured ? 'aspect-[16/10] lg:aspect-auto lg:min-h-[340px] lg:flex-1' : 'aspect-[16/10]'
+          }`;
+
+          const img = document.createElement('img');
+          img.src = thumb;
+          img.alt = title || '';
+          img.width = 800;
+          img.height = 500;
+          img.loading = 'lazy';
+          img.className = 'w-full h-full object-cover object-center group-hover:scale-[1.03] transition-transform duration-300';
+
+          const scrim = document.createElement('div');
+          scrim.className = 'absolute inset-0 bg-gradient-to-t from-slate-950/65 via-transparent to-transparent';
+          scrim.setAttribute('aria-hidden', 'true');
+
+          const badge = document.createElement('span');
+          badge.className = `absolute top-3.5 start-3.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold shadow-sm ${
+            isVideo ? 'bg-red-700 text-white' : 'bg-primary-900/90 text-white'
+          }`;
+          badge.textContent = isVideo ? i18nClient.videoBadge : i18nClient.photoBadge;
+
+          mediaWrap.append(img, scrim, badge);
+
+          const body = document.createElement('div');
+          body.className = 'p-5 sm:p-6 flex flex-col justify-between flex-shrink-0';
+
+          const topBody = document.createElement('div');
+          const catEl = document.createElement('span');
+          catEl.className = 'block text-xs font-semibold text-accent mb-1.5';
+          catEl.textContent = catLabel;
+
+          const h3 = document.createElement('h3');
+          h3.className = `font-bold text-slate-900 group-hover:text-accent transition-colors leading-snug mb-1.5 ${
+            isFeatured ? 'text-lg sm:text-xl' : 'text-base sm:text-lg'
+          }`;
+          h3.textContent = title || '';
+
+          const p = document.createElement('p');
+          p.className = 'text-sm text-slate-600 leading-relaxed line-clamp-2';
+          p.textContent = desc;
+
+          topBody.append(catEl, h3, p);
+
+          const foot = document.createElement('div');
+          foot.className = 'mt-4 pt-3.5 border-t border-stone-100 flex items-center justify-between text-xs font-bold text-primary-900 group-hover:text-accent transition-colors';
+          const footText = document.createElement('span');
+          footText.textContent = isVideo ? i18nClient.watchVideo : i18nClient.zoom;
+          const arrowSpan = document.createElement('span');
+          arrowSpan.setAttribute('aria-hidden', 'true');
+          arrowSpan.textContent = isAr ? '←' : '→';
+          foot.append(footText, arrowSpan);
+
+          body.append(topBody, foot);
+          btn.append(mediaWrap, body);
+          article.append(btn);
+          grid.append(article);
+        });
+      }
+    }
+  } catch (e) {
+    console.error(e);
+  }
+
+  // Native <dialog> Lightbox Control
+  const dialog = document.getElementById('lightbox-modal');
+  const closeBtn = document.getElementById('lightbox-close');
+  const titleEl = document.getElementById('lightbox-title');
+  const descEl = document.getElementById('lightbox-desc');
+  const container = document.getElementById('lightbox-media-container');
+
+  function openLightbox(type, src, title, desc) {
+    if (!(dialog instanceof HTMLDialogElement) || !container || !titleEl || !descEl) return;
+
+    titleEl.textContent = title || '';
+    descEl.textContent = desc || '';
+    container.replaceChildren();
+
+    if (type === 'video') {
+      const iframe = document.createElement('iframe');
+      iframe.src = src.includes('?') ? `${src}&autoplay=1` : `${src}?autoplay=1`;
+      iframe.title = title || 'Video preview';
+      iframe.className = 'w-full h-full min-h-[320px] sm:min-h-[460px] border-0';
+      iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+      iframe.allowFullscreen = true;
+      container.append(iframe);
+    } else {
+      const img = document.createElement('img');
+      img.src = src;
+      img.alt = title || '';
+      img.className = 'max-w-full max-h-[72dvh] object-contain mx-auto';
+      container.append(img);
+    }
+
+    dialog.showModal();
+  }
+
+  document.addEventListener('click', (e) => {
+    const trigger = e.target instanceof Element ? e.target.closest('.media-trigger') : null;
+    if (!trigger) return;
+    openLightbox(
+      trigger.getAttribute('data-type') || 'image',
+      trigger.getAttribute('data-src') || '',
+      trigger.getAttribute('data-title') || '',
+      trigger.getAttribute('data-desc') || ''
+    );
+  });
+
+  closeBtn?.addEventListener('click', () => {
+    if (dialog instanceof HTMLDialogElement) dialog.close();
+  });
+
+  dialog?.addEventListener('close', () => {
+    if (container) container.replaceChildren();
+  });
+
+  // Fallback light-dismiss for Safari / browsers lacking closedby="any"
+  if (dialog instanceof HTMLDialogElement && !('closedBy' in HTMLDialogElement.prototype)) {
+    const isOutside = (e, el) => {
+      const r = el.getBoundingClientRect();
+      return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
+    };
+    let pressedOutside = false;
+    dialog.addEventListener('pointerdown', (e) => {
+      pressedOutside = isOutside(e, dialog);
+    });
+    dialog.addEventListener('pointerup', (e) => {
+      if (pressedOutside && isOutside(e, dialog)) dialog.close();
+    });
+  }
+</script>

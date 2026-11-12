@@ -1,0 +1,74 @@
+---
+import { useTranslations } from '../i18n/ui';
+
+interface Props {
+  lang: 'ar' | 'en';
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+
+const stats = [
+  { target: 5000, suffix: '+', label: t('stats.clients'), sub: t('stats.clientsSub') },
+  { target: 10, suffix: '+', label: t('stats.years'), sub: t('stats.yearsSub') },
+  { target: 27, suffix: '', label: t('stats.govs'), sub: t('stats.govsSub') },
+  { target: 15000, suffix: '+', label: t('stats.trips'), sub: t('stats.tripsSub') },
+];
+---
+
+<section id="stats" class="dark-surface bg-primary-900 py-10 sm:py-16 text-white border-y border-white/10">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <dl class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-0 lg:divide-x rtl:lg:divide-x-reverse divide-white/15">
+      {stats.map((stat) => (
+        <div class="bg-white/[0.05] lg:bg-transparent border border-white/10 lg:border-0 rounded-2xl lg:rounded-none py-4 px-3 sm:px-6 text-center">
+          <dd class="text-2xl sm:text-4xl lg:text-[2.75rem] font-extrabold tracking-tight text-white tabular-nums">
+            <span class="counter-number" data-target={stat.target}>
+              {stat.target.toLocaleString('en-US')}
+            </span>
+            {stat.suffix && <span class="text-accent-300">{stat.suffix}</span>}
+          </dd>
+          <dt class="text-xs sm:text-base font-bold text-slate-100 mt-1 sm:mt-1.5">
+            {stat.label}
+          </dt>
+          <p class="text-[11px] sm:text-xs text-slate-300 mt-0.5 sm:mt-1">
+            {stat.sub}
+          </p>
+        </div>
+      ))}
+    </dl>
+  </div>
+</section>
+
+<script>
+  const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const counters = document.querySelectorAll('.counter-number');
+
+  if (!reducedMotion && counters.length > 0 && 'IntersectionObserver' in window) {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          const el = entry.target as HTMLElement;
+          const target = parseInt(el.getAttribute('data-target') || '0', 10);
+          const duration = 3500;
+          const start = performance.now();
+          el.textContent = '0';
+
+          function tick(now: number) {
+            const progress = Math.min((now - start) / duration, 1);
+            const eased = Math.sin((progress * Math.PI) / 2);
+            const value = progress >= 1 ? target : Math.round(target * eased);
+            el.textContent = value.toLocaleString('en-US');
+            if (progress < 1) requestAnimationFrame(tick);
+          }
+
+          requestAnimationFrame(tick);
+          observer.unobserve(el);
+        });
+      },
+      { threshold: 0.35 }
+    );
+
+    counters.forEach((counter) => observer.observe(counter));
+  }
+</script>

@@ -1,0 +1,281 @@
+---
+import { useTranslations } from '../i18n/ui';
+import settings from '../data/settings.json';
+import { Truck, ShieldCheck, Star, Phone, MessageCircle, CheckCircle2, MapPin, ChevronDown } from '@lucide/astro';
+
+interface Props {
+  lang: 'ar' | 'en';
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const isAr = lang === 'ar';
+
+const phone = settings.phone;
+const defaultMessage = isAr
+  ? encodeURIComponent('مرحباً، أريد الاستفسار وحجز خدمة نقل العفش مع خصم 20%')
+  : encodeURIComponent('Hello, I would like to book a furniture moving service with the 20% discount');
+const whatsappLink = `https://wa.me/${settings.whatsappNumber}?text=${defaultMessage}`;
+
+const locations = [
+  { value: isAr ? 'القاهرة' : 'Cairo', label: t('hero.loc.cairo') },
+  { value: isAr ? 'الجيزة' : 'Giza', label: t('hero.loc.giza') },
+  { value: isAr ? 'الإسكندرية والساحل' : 'Alexandria & North Coast', label: t('hero.loc.alex') },
+  { value: isAr ? 'محافظات الدلتا' : 'Delta Governorates', label: t('hero.loc.delta') },
+  { value: isAr ? 'مدن القناة' : 'Canal Cities', label: t('hero.loc.canal') },
+  { value: isAr ? 'محافظات الصعيد والبحر الأحمر' : 'Upper Egypt & Red Sea', label: t('hero.loc.upper') },
+];
+
+const roomSizes = [
+  { value: t('hero.quote.rooms2'), label: t('hero.quote.rooms2') },
+  { value: t('hero.quote.rooms1'), label: t('hero.quote.rooms1') },
+  { value: t('hero.quote.rooms3'), label: t('hero.quote.rooms3') },
+  { value: t('hero.quote.rooms4'), label: t('hero.quote.rooms4') },
+];
+---
+
+<section id="home" class="dark-surface relative pt-32 pb-12 sm:pt-36 md:pb-24 text-white overflow-hidden bg-primary-900">
+  <!-- Ambient Background Image with Directional Readability Scrim -->
+  <div class="absolute inset-0 z-0" aria-hidden="true">
+    <img
+      src="/media/hero-moving-egypt.jpg"
+      alt=""
+      width="1600"
+      height="900"
+      fetchpriority="high"
+      class="w-full h-full object-cover object-center opacity-35"
+    />
+    <div class="absolute inset-0 bg-gradient-to-b from-primary-900/90 via-primary-900/85 to-primary-900"></div>
+  </div>
+
+  <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid lg:grid-cols-12 gap-6 sm:gap-8 lg:gap-10 items-center">
+      <!-- Left/Start Column: Clear Value Proposition & Direct Actions -->
+      <div class="lg:col-span-7 text-center md:text-start">
+        <h1 class="heading-hero font-extrabold tracking-tight text-white mb-3.5 sm:mb-5">
+          {t('hero.title.line1')}
+          <span class="block text-accent-300 mt-1 sm:mt-1.5">
+            {t('hero.title.line2')}
+          </span>
+        </h1>
+
+        <p class="prose-pretty text-sm sm:text-lg text-slate-200 max-w-[58ch] mx-auto md:mx-0 leading-relaxed mb-5 sm:mb-8">
+          {t('hero.subtitle')}
+        </p>
+
+        <!-- Primary Dual CTAs -->
+        <div class="grid grid-cols-1 min-[360px]:grid-cols-2 sm:flex gap-2.5 sm:gap-3.5 justify-center md:justify-start items-stretch sm:items-center mb-6 sm:mb-10">
+          <a
+            href={whatsappLink}
+            data-contact-whatsapp
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-3 sm:py-3.5 text-sm sm:text-base font-bold rounded-xl text-white bg-whatsapp hover:bg-whatsapp-hover active:scale-[0.99] transition-all shadow-md min-h-[48px] sm:min-h-[52px] whitespace-nowrap"
+          >
+            <MessageCircle class="w-4 h-4 sm:w-5 sm:h-5 shrink-0" aria-hidden="true" />
+            <span>{t('hero.cta')}</span>
+            <span class="hidden sm:inline-block text-xs bg-black/25 px-2 py-0.5 rounded-md font-semibold">
+              {t('hero.discountPill')}
+            </span>
+          </a>
+
+          <a
+            href={`tel:${phone}`}
+            data-contact-tel
+            class="inline-flex items-center justify-center gap-2 px-4 sm:px-6 py-3 sm:py-3.5 text-sm sm:text-base font-bold rounded-xl text-white bg-primary-800 hover:bg-primary-light active:scale-[0.99] border border-white/25 transition-all min-h-[48px] sm:min-h-[52px] whitespace-nowrap"
+          >
+            <Phone class="w-4 h-4 sm:w-5 sm:h-5 text-accent-300 shrink-0" aria-hidden="true" />
+            <span>{t('hero.call')}</span>
+          </a>
+        </div>
+
+        <!-- Grounded Proof Points (Compact 3-up mobile bar -> desktop row) -->
+        <div class="grid grid-cols-3 gap-2 sm:gap-5 bg-white/[0.06] sm:bg-transparent border border-white/10 sm:border-0 rounded-2xl p-3 sm:p-0 sm:pt-6 sm:border-t sm:border-white/15 text-slate-200">
+          <div class="flex flex-col sm:flex-row items-center text-center sm:text-start gap-1.5 sm:gap-3 justify-start md:justify-start">
+            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
+              <Star class="w-4 h-4 sm:w-5 sm:h-5 fill-amber-300 text-amber-300" aria-hidden="true" />
+            </div>
+            <div>
+              <div class="text-xs sm:text-sm font-bold text-white leading-tight">{t('hero.trust.ratingTitle')}</div>
+              <div class="hidden sm:block text-xs text-slate-300">{t('hero.trust.ratingSub')}</div>
+            </div>
+          </div>
+
+          <div class="flex flex-col sm:flex-row items-center text-center sm:text-start gap-1.5 sm:gap-3 justify-start md:justify-start">
+            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
+              <ShieldCheck class="w-4 h-4 sm:w-5 sm:h-5 text-emerald-300" aria-hidden="true" />
+            </div>
+            <div>
+              <div class="text-xs sm:text-sm font-bold text-white leading-tight">{t('hero.trust.safeTitle')}</div>
+              <div class="hidden sm:block text-xs text-slate-300">{t('hero.trust.safeSub')}</div>
+            </div>
+          </div>
+
+          <div class="flex flex-col sm:flex-row items-center text-center sm:text-start gap-1.5 sm:gap-3 justify-start md:justify-start">
+            <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-white/10 flex items-center justify-center shrink-0">
+              <Truck class="w-4 h-4 sm:w-5 sm:h-5 text-accent-300" aria-hidden="true" />
+            </div>
+            <div>
+              <div class="text-xs sm:text-sm font-bold text-white leading-tight">{t('hero.trust.winchTitle')}</div>
+              <div class="hidden sm:block text-xs text-slate-300">{t('hero.trust.winchSub')}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right/End Column: Instant Estimate Calculator Card -->
+      <div class="lg:col-span-5">
+        <div class="light-surface bg-white text-slate-900 rounded-2xl p-4 sm:p-7 shadow-elevated border border-stone-200">
+          <div class="flex items-center justify-between gap-2 mb-2.5 sm:mb-3">
+            <span class="inline-flex items-center px-2.5 py-1 rounded-md bg-accent-50 text-accent-700 border border-accent-200 text-xs font-bold">
+              {t('hero.quote.offer')}
+            </span>
+          </div>
+
+          <h2 class="text-lg sm:text-2xl font-bold text-primary-900 tracking-tight">
+            {t('hero.quote.title')}
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-600 mt-1 sm:mt-1.5 mb-4 sm:mb-5 leading-relaxed">
+            {t('hero.quote.subtitle')}
+          </p>
+
+          <form id="quote-form" class="space-y-3 sm:space-y-4">
+            <!-- Pickup & Dropoff Locations -->
+            <div class="grid grid-cols-2 gap-2.5 sm:gap-3.5">
+              <div>
+                <label for="from-location" class="flex items-center gap-1 text-[11px] sm:text-xs font-bold text-slate-700 mb-1">
+                  <MapPin class="w-3.5 h-3.5 text-accent shrink-0" aria-hidden="true" />
+                  <span class="truncate">{t('hero.quote.from')}</span>
+                </label>
+                <div class="relative">
+                  <select
+                    id="from-location"
+                    name="from"
+                    class="w-full appearance-none bg-surface-warm border border-stone-300 rounded-xl ps-2.5 sm:ps-3 pe-8 sm:pe-9 py-2.5 min-h-[44px] sm:min-h-[46px] text-xs sm:text-sm font-medium text-slate-900 focus:border-accent"
+                  >
+                    {locations.map((loc, idx) => (
+                      <option value={loc.value} selected={idx === 0}>{loc.label}</option>
+                    ))}
+                  </select>
+                  <ChevronDown class="w-4 h-4 text-slate-600 pointer-events-none absolute top-1/2 -translate-y-1/2 end-2.5 sm:end-3" aria-hidden="true" />
+                </div>
+              </div>
+
+              <div>
+                <label for="to-location" class="flex items-center gap-1 text-[11px] sm:text-xs font-bold text-slate-700 mb-1">
+                  <MapPin class="w-3.5 h-3.5 text-whatsapp shrink-0" aria-hidden="true" />
+                  <span class="truncate">{t('hero.quote.to')}</span>
+                </label>
+                <div class="relative">
+                  <select
+                    id="to-location"
+                    name="to"
+                    class="w-full appearance-none bg-surface-warm border border-stone-300 rounded-xl ps-2.5 sm:ps-3 pe-8 sm:pe-9 py-2.5 min-h-[44px] sm:min-h-[46px] text-xs sm:text-sm font-medium text-slate-900 focus:border-accent"
+                  >
+                    {locations.map((loc, idx) => (
+                      <option value={loc.value} selected={idx === 1}>{loc.label}</option>
+                    ))}
+                  </select>
+                  <ChevronDown class="w-4 h-4 text-slate-600 pointer-events-none absolute top-1/2 -translate-y-1/2 end-2.5 sm:end-3" aria-hidden="true" />
+                </div>
+              </div>
+            </div>
+
+            <!-- Move Size -->
+            <div>
+              <label for="move-size" class="block text-xs font-bold text-slate-700 mb-1.5">
+                {t('hero.quote.rooms')}
+              </label>
+              <div class="relative">
+                <select
+                  id="move-size"
+                  name="size"
+                  class="w-full appearance-none bg-surface-warm border border-stone-300 rounded-xl ps-3 pe-9 py-2.5 min-h-[46px] text-sm font-medium text-slate-900 focus:border-accent"
+                >
+                  {roomSizes.map((size) => (
+                    <option value={size.value}>{size.label}</option>
+                  ))}
+                </select>
+                <ChevronDown class="w-4 h-4 text-slate-600 pointer-events-none absolute top-1/2 -translate-y-1/2 end-3" aria-hidden="true" />
+              </div>
+            </div>
+
+            <!-- Hydraulic Winch Selection -->
+            <fieldset>
+              <legend class="block text-xs font-bold text-slate-700 mb-1.5">
+                {t('hero.quote.winch')}
+              </legend>
+              <div class="grid grid-cols-2 gap-2.5">
+                <label class="flex items-center gap-2 p-3 min-h-[46px] rounded-xl border border-stone-300 bg-surface-warm hover:border-accent cursor-pointer transition-colors text-xs font-semibold text-slate-800 has-[:checked]:border-accent has-[:checked]:bg-accent-50">
+                  <input
+                    type="radio"
+                    name="winch-opt"
+                    value={t('hero.quote.winchYes')}
+                    checked
+                    class="w-4 h-4 shrink-0"
+                  />
+                  <span>{t('hero.quote.winchYes')}</span>
+                </label>
+                <label class="flex items-center gap-2 p-3 min-h-[46px] rounded-xl border border-stone-300 bg-surface-warm hover:border-accent cursor-pointer transition-colors text-xs font-semibold text-slate-800 has-[:checked]:border-accent has-[:checked]:bg-accent-50">
+                  <input
+                    type="radio"
+                    name="winch-opt"
+                    value={t('hero.quote.winchNo')}
+                    class="w-4 h-4 shrink-0"
+                  />
+                  <span>{t('hero.quote.winchNo')}</span>
+                </label>
+              </div>
+            </fieldset>
+
+            <button
+              type="submit"
+              id="submit-quote-btn"
+              class="w-full bg-whatsapp hover:bg-whatsapp-hover active:scale-[0.99] text-white font-bold py-3.5 px-4 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 text-base min-h-[50px]"
+            >
+              <MessageCircle class="w-5 h-5" aria-hidden="true" />
+              <span>{t('hero.quote.submit')}</span>
+            </button>
+
+            <p class="flex items-center justify-center gap-1.5 text-xs text-slate-600 pt-0.5 text-center">
+              <CheckCircle2 class="w-4 h-4 text-whatsapp shrink-0" aria-hidden="true" />
+              <span>{t('hero.quote.response')}</span>
+            </p>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script define:vars={{ defaultWhatsapp: settings.whatsappNumber, lang }}>
+  // Pure JavaScript (no TS casts) inside define:vars inline script
+  const quoteForm = document.getElementById('quote-form');
+  quoteForm?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const fromEl = document.getElementById('from-location');
+    const toEl = document.getElementById('to-location');
+    const sizeEl = document.getElementById('move-size');
+    const winchEl = document.querySelector('input[name="winch-opt"]:checked');
+
+    const fromVal = fromEl ? fromEl.value : '';
+    const toVal = toEl ? toEl.value : '';
+    const sizeVal = sizeEl ? sizeEl.value : '';
+    const winchVal = winchEl ? winchEl.value : '';
+
+    let customSettings = null;
+    try {
+      customSettings = JSON.parse(localStorage.getItem('mover_settings') || 'null');
+    } catch {}
+    const targetPhone = (customSettings && customSettings.whatsappNumber)
+      ? customSettings.whatsappNumber
+      : defaultWhatsapp;
+
+    const text = lang === 'en'
+      ? `Hello Al Walaa Moving,\nQuote & 20% discount request:\n- From: ${fromVal}\n- To: ${toVal}\n- Size: ${sizeVal}\n- Hydraulic Hoist: ${winchVal}\nPlease share the cost estimate and available slots.`
+      : `مرحباً شركة الولاء لنقل الأثاث\nطلب عرض سعر وخصم (20%) لنقل عفش:\n- من: ${fromVal}\n- إلى: ${toVal}\n- الحجم: ${sizeVal}\n- الونش: ${winchVal}\nبرجاء إرسال تفاصيل التكلفة والمواعيد المتاحة.`;
+
+    const targetUrl = `https://wa.me/${targetPhone}?text=${encodeURIComponent(text)}`;
+    window.open(targetUrl, '_blank', 'noopener,noreferrer');
+  });
+</script>

@@ -1,0 +1,79 @@
+---
+import { useTranslations } from '../i18n/ui';
+import { ShieldCheck, Receipt, Clock, Users } from '@lucide/astro';
+
+interface Props {
+  lang: 'ar' | 'en';
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+
+const features = [
+  {
+    icon: Clock,
+    title: t('whyus.exp'),
+    desc: t('whyus.exp.desc'),
+  },
+  {
+    icon: ShieldCheck,
+    title: t('whyus.safe'),
+    desc: t('whyus.safe.desc'),
+  },
+  {
+    icon: Receipt,
+    title: t('whyus.price'),
+    desc: t('whyus.price.desc'),
+  },
+  {
+    icon: Users,
+    title: t('whyus.team'),
+    desc: t('whyus.team.desc'),
+  },
+];
+---
+
+<section id="whyus" class="scroll-mt-28 py-12 md:py-24 bg-surface-warm border-y border-stone-200">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid lg:grid-cols-12 gap-7 lg:gap-12 items-start">
+      <!-- Start Column: Editorial Summary -->
+      <div class="lg:col-span-5 text-start lg:sticky lg:top-32">
+        <p class="text-xs sm:text-sm font-semibold text-accent mb-2">
+          {t('whyus.eyebrow')}
+        </p>
+        <h2 class="heading-section font-extrabold text-primary-900 tracking-tight">
+          {t('whyus.title')}
+        </h2>
+        <p class="prose-pretty mt-3 text-slate-600 text-sm sm:text-lg leading-relaxed">
+          {t('whyus.subtitle')}
+        </p>
+
+        <div class="mt-5 sm:mt-7 p-4 sm:p-5 rounded-2xl bg-primary-900 text-white">
+          <div class="text-xl sm:text-2xl font-extrabold text-accent-300 tabular-nums">100%</div>
+          <p class="text-xs sm:text-sm text-slate-200 mt-1 leading-relaxed">
+            {t('whyus.safe.desc')}
+          </p>
+        </div>
+      </div>
+
+      <!-- End Column: 2x2 Structured Guarantees -->
+      <div class="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-3.5 sm:gap-5">
+        {features.map((feature) => (
+          <div class="bg-white rounded-2xl p-4 sm:p-6 border border-stone-200 flex sm:block items-start gap-3.5">
+            <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-surface-warm border border-stone-200 flex items-center justify-center shrink-0 sm:mb-4">
+              <feature.icon class="w-5 h-5 text-accent" aria-hidden="true" />
+            </div>
+            <div class="min-w-0">
+              <h3 class="text-base sm:text-lg font-bold text-primary-900 mb-1 sm:mb-2 leading-snug">
+                {feature.title}
+              </h3>
+              <p class="text-slate-600 text-xs sm:text-sm leading-relaxed">
+                {feature.desc}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>

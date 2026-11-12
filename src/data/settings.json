@@ -1,0 +1,15 @@
+{
+  "phone": "201000000000",
+  "displayPhone": "+20 100 000 0000",
+  "whatsappNumber": "201000000000",
+  "workingHours": "خدمة عملاء 24 ساعة / 7 أيام",
+  "topBar": {
+    "enabled": true
+  },
+  "social": {
+    "facebook": "https://www.facebook.com/",
+    "instagram": "https://www.instagram.com/",
+    "tiktok": "",
+    "youtube": ""
+  }
+}

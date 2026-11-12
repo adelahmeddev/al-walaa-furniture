@@ -1,0 +1,334 @@
+---
+import { useTranslations } from '../i18n/ui';
+import settings from '../data/settings.json';
+import { Phone, MessageCircle, Globe, ArrowLeft, ArrowRight } from '@lucide/astro';
+
+interface Props {
+  lang: 'ar' | 'en';
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const isAr = lang === 'ar';
+const switchUrl = isAr ? '/en/' : '/';
+const switchText = isAr ? 'English' : 'عربي';
+
+const phone = settings.phone;
+const displayPhone = settings.displayPhone;
+const whatsappNumber = settings.whatsappNumber;
+
+function formatNumberDisplay(raw: string): string {
+  const digits = String(raw || '').replace(/\D/g, '');
+  if (digits.startsWith('20') && digits.length === 12) {
+    return `+${digits.slice(0, 2)} ${digits.slice(2, 5)} ${digits.slice(5, 8)} ${digits.slice(8)}`;
+  }
+  return digits ? `+${digits}` : displayPhone;
+}
+
+const displayWhatsapp = whatsappNumber === phone ? displayPhone : formatNumberDisplay(whatsappNumber);
+
+const message = isAr
+  ? encodeURIComponent('مرحباً، أريد الاستفسار وحجز خدمة نقل العفش مع خصم 20%')
+  : encodeURIComponent('Hello, I would like to inquire and book a furniture moving service with the 20% discount');
+const whatsappLink = `https://wa.me/${whatsappNumber}?text=${message}`;
+
+const topBarEnabled = settings.topBar?.enabled !== false;
+const socialLinks = [
+  { key: 'facebook', label: 'Facebook', url: settings.social?.facebook || '' },
+  { key: 'instagram', label: 'Instagram', url: settings.social?.instagram || '' },
+  { key: 'tiktok', label: 'TikTok', url: settings.social?.tiktok || '' },
+  { key: 'youtube', label: 'YouTube', url: settings.social?.youtube || '' },
+];
+---
+
+<header class="fixed w-full z-40 top-0 bg-white border-b border-stone-200 shadow-xs">
+  <!-- Controllable Top Contact Numbers & Social Media Bar -->
+  <div
+    id="top-contact-bar"
+    data-topbar-root
+    class={`dark-surface bg-primary-900 text-slate-200 text-xs py-1.5 px-3 sm:px-6 lg:px-8 border-b border-accent-400/20 ${topBarEnabled ? '' : 'hidden'}`}
+  >
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+      <!-- Contact Numbers: Direct Call & WhatsApp -->
+      <div class="flex items-center gap-2 sm:gap-3.5 min-w-0">
+        <a
+          href={`tel:${phone}`}
+          data-contact-tel
+          dir="ltr"
+          class="inline-flex items-center gap-1.5 text-white hover:text-accent-300 font-mono text-[11px] sm:text-xs font-semibold transition-colors whitespace-nowrap py-1"
+          aria-label={t('hero.call')}
+        >
+          <Phone class="w-3.5 h-3.5 text-accent-300 shrink-0" aria-hidden="true" />
+          <span data-contact-phone-display>{displayPhone}</span>
+        </a>
+
+        <span class="text-white/25" aria-hidden="true">|</span>
+
+        <a
+          href={whatsappLink}
+          data-contact-whatsapp
+          target="_blank"
+          rel="noopener noreferrer"
+          dir="ltr"
+          class="inline-flex items-center gap-1.5 text-emerald-300 hover:text-emerald-200 font-mono text-[11px] sm:text-xs font-semibold transition-colors whitespace-nowrap py-1"
+          aria-label={t('whatsapp.btn')}
+        >
+          <MessageCircle class="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+          <span data-contact-whatsapp-display>{displayWhatsapp}</span>
+        </a>
+      </div>
+
+      <!-- Configurable Social Media Links -->
+      <div data-social-list class="flex items-center gap-1 shrink-0">
+        {socialLinks.map((item) => (
+          <a
+            data-social-key={item.key}
+            href={item.url || '#'}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={item.label}
+            class={`inline-flex items-center justify-center w-7 h-7 rounded-md bg-white/[0.08] text-slate-200 hover:bg-accent-400 hover:text-primary-900 transition-colors ${item.url ? '' : 'hidden'}`}
+          >
+            {item.key === 'facebook' && (
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M14 13.5h2.5l1-4H14v-2c0-1.03 0-2 2-2h1.5V2.14c-.326-.043-1.557-.14-2.857-.14C11.928 2 10 3.657 10 6.7v2.8H7v4h3V22h4v-8.5z"/>
+              </svg>
+            )}
+            {item.key === 'instagram' && (
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="2" y="2" width="20" height="20" rx="5" ry="5"/>
+                <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+                <line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/>
+              </svg>
+            )}
+            {item.key === 'tiktok' && (
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1v-3.5a6.37 6.37 0 0 0-.79-.05A6.34 6.34 0 0 0 3.15 15a6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.34-6.34V8.7a8.18 8.18 0 0 0 4.76 1.52v-3.4a4.85 4.85 0 0 1-1-.13z"/>
+              </svg>
+            )}
+            {item.key === 'youtube' && (
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M23.5 6.2a3.01 3.01 0 0 0-2.12-2.13C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.38.57A3.01 3.01 0 0 0 .5 6.2 31.4 31.4 0 0 0 0 12a31.4 31.4 0 0 0 .5 5.8 3.01 3.01 0 0 0 2.12 2.13C4.5 20.5 12 20.5 12 20.5s7.5 0 9.38-.57a3.01 3.01 0 0 0 2.12-2.13A31.4 31.4 0 0 0 24 12a31.4 31.4 0 0 0-.5-5.8zM9.75 15.5v-7l6.5 3.5-6.5 3.5z"/>
+              </svg>
+            )}
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Navigation Bar -->
+  <div class="bg-white text-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex justify-between items-center h-[4.5rem] sm:h-20 gap-3 lg:gap-4">
+        <!-- Brand Mark -->
+        <a href={isAr ? '/' : '/en/'} class="flex items-center gap-2.5 shrink-0 group">
+          <img
+            src="/logo.jpg"
+            alt={t('brand.name')}
+            width="56"
+            height="56"
+            class="h-12 sm:h-14 w-12 sm:w-14 object-contain rounded-lg bg-white shrink-0"
+          />
+          <div>
+            <div class="text-lg sm:text-xl font-extrabold text-primary-900 tracking-tight leading-none whitespace-nowrap">
+              {t('brand.name')}
+            </div>
+            <div class="text-[11px] font-semibold text-accent mt-1 whitespace-nowrap">
+              {t('brand.subtitle')}
+            </div>
+          </div>
+        </a>
+
+        <!-- Desktop Nav Links -->
+        <nav aria-label={t('nav.label')} class="hidden lg:block">
+          <ul class="flex items-center gap-4 xl:gap-6 font-semibold text-slate-700 text-sm">
+            <li>
+              <a href="#home" class="whitespace-nowrap py-1.5 hover:text-accent transition-colors">
+                {t('nav.home')}
+              </a>
+            </li>
+            <li>
+              <a href="#gallery" class="whitespace-nowrap py-1.5 hover:text-accent transition-colors">
+                {t('nav.gallery')}
+              </a>
+            </li>
+            <li>
+              <a href="#services" class="whitespace-nowrap py-1.5 hover:text-accent transition-colors">
+                {t('nav.services')}
+              </a>
+            </li>
+            <li>
+              <a href="#whyus" class="whitespace-nowrap py-1.5 hover:text-accent transition-colors">
+                {t('nav.whyus')}
+              </a>
+            </li>
+            <li>
+              <a href="#howitworks" class="whitespace-nowrap py-1.5 hover:text-accent transition-colors">
+                {t('nav.howitworks')}
+              </a>
+            </li>
+            <li>
+              <a href="#areas" class="whitespace-nowrap py-1.5 hover:text-accent transition-colors">
+                {t('nav.areas')}
+              </a>
+            </li>
+            <li>
+              <a href="#faq" class="whitespace-nowrap py-1.5 hover:text-accent transition-colors">
+                {t('nav.faq')}
+              </a>
+            </li>
+          </ul>
+        </nav>
+
+        <!-- Desktop Action Controls -->
+        <div class="hidden sm:flex items-center gap-2.5 shrink-0">
+          <a
+            href={switchUrl}
+            hreflang={isAr ? 'en' : 'ar'}
+            class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-primary-900 border border-stone-300 hover:border-primary-900/40 px-3 py-2 rounded-lg transition-colors bg-surface-warm hover:bg-stone-200/60 whitespace-nowrap min-h-[40px]"
+          >
+            <Globe class="w-3.5 h-3.5 text-slate-600" aria-hidden="true" />
+            <span>{switchText}</span>
+          </a>
+
+          <a
+            href={`tel:${phone}`}
+            data-contact-tel
+            class="hidden xl:inline-flex items-center gap-2 text-primary-900 font-bold text-sm px-3 py-2 rounded-lg hover:bg-stone-100 transition-colors whitespace-nowrap min-h-[40px]"
+          >
+            <Phone class="w-4 h-4 text-accent" aria-hidden="true" />
+            <span dir="ltr" data-contact-phone-display>{displayPhone}</span>
+          </a>
+
+          <a
+            href={whatsappLink}
+            data-contact-whatsapp
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-2 bg-whatsapp hover:bg-whatsapp-hover text-white px-4 py-2.5 rounded-lg text-sm font-bold shadow-sm transition-colors whitespace-nowrap min-h-[42px]"
+          >
+            <MessageCircle class="w-4 h-4" aria-hidden="true" />
+            <span>{t('hero.cta')}</span>
+          </a>
+        </div>
+
+        <!-- Mobile Controls -->
+        <div class="flex lg:hidden items-center gap-2">
+          <a
+            href={switchUrl}
+            hreflang={isAr ? 'en' : 'ar'}
+            class="inline-flex items-center gap-1 text-xs font-semibold text-slate-700 border border-stone-300 px-3 py-2 rounded-lg min-h-[40px]"
+          >
+            <Globe class="w-3.5 h-3.5 text-slate-600" aria-hidden="true" />
+            <span>{switchText}</span>
+          </a>
+          <button
+            type="button"
+            id="menu-toggle"
+            aria-expanded="false"
+            aria-controls="mobile-menu"
+            aria-label={t('nav.menu')}
+            class="p-2.5 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg hover:bg-stone-100 border border-stone-200 transition-colors text-slate-800"
+          >
+            <span class="w-5 flex flex-col gap-1.5" aria-hidden="true">
+              <span class="hamburger-line block w-full h-0.5 bg-slate-800 rounded-full transition-transform duration-200"></span>
+              <span class="hamburger-line block w-full h-0.5 bg-slate-800 rounded-full transition-opacity duration-200"></span>
+              <span class="hamburger-line block w-full h-0.5 bg-slate-800 rounded-full transition-transform duration-200"></span>
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mobile Collapsible Menu -->
+  <div id="mobile-menu" class="lg:hidden hidden bg-white text-slate-800 border-t border-stone-200 shadow-lg max-h-[calc(100dvh-7rem)] overflow-y-auto">
+    <nav aria-label={t('nav.label')} class="px-4 py-4 space-y-1">
+      <a href="#home" class="mobile-link flex items-center justify-between px-4 py-2.5 text-slate-800 hover:text-primary-900 hover:bg-surface-warm rounded-lg font-semibold transition-colors">
+        <span>{t('nav.home')}</span>
+        {isAr ? <ArrowLeft class="w-4 h-4 text-slate-500" aria-hidden="true" /> : <ArrowRight class="w-4 h-4 text-slate-500" aria-hidden="true" />}
+      </a>
+      <a href="#gallery" class="mobile-link flex items-center justify-between px-4 py-2.5 text-slate-800 hover:text-primary-900 hover:bg-surface-warm rounded-lg font-semibold transition-colors">
+        <span>{t('nav.gallery')}</span>
+        {isAr ? <ArrowLeft class="w-4 h-4 text-slate-500" aria-hidden="true" /> : <ArrowRight class="w-4 h-4 text-slate-500" aria-hidden="true" />}
+      </a>
+      <a href="#services" class="mobile-link flex items-center justify-between px-4 py-2.5 text-slate-800 hover:text-primary-900 hover:bg-surface-warm rounded-lg font-semibold transition-colors">
+        <span>{t('nav.services')}</span>
+        {isAr ? <ArrowLeft class="w-4 h-4 text-slate-500" aria-hidden="true" /> : <ArrowRight class="w-4 h-4 text-slate-500" aria-hidden="true" />}
+      </a>
+      <a href="#whyus" class="mobile-link flex items-center justify-between px-4 py-2.5 text-slate-800 hover:text-primary-900 hover:bg-surface-warm rounded-lg font-semibold transition-colors">
+        <span>{t('nav.whyus')}</span>
+        {isAr ? <ArrowLeft class="w-4 h-4 text-slate-500" aria-hidden="true" /> : <ArrowRight class="w-4 h-4 text-slate-500" aria-hidden="true" />}
+      </a>
+      <a href="#howitworks" class="mobile-link flex items-center justify-between px-4 py-2.5 text-slate-800 hover:text-primary-900 hover:bg-surface-warm rounded-lg font-semibold transition-colors">
+        <span>{t('nav.howitworks')}</span>
+        {isAr ? <ArrowLeft class="w-4 h-4 text-slate-500" aria-hidden="true" /> : <ArrowRight class="w-4 h-4 text-slate-500" aria-hidden="true" />}
+      </a>
+      <a href="#areas" class="mobile-link flex items-center justify-between px-4 py-2.5 text-slate-800 hover:text-primary-900 hover:bg-surface-warm rounded-lg font-semibold transition-colors">
+        <span>{t('nav.areas')}</span>
+        {isAr ? <ArrowLeft class="w-4 h-4 text-slate-500" aria-hidden="true" /> : <ArrowRight class="w-4 h-4 text-slate-500" aria-hidden="true" />}
+      </a>
+      <a href="#faq" class="mobile-link flex items-center justify-between px-4 py-2.5 text-slate-800 hover:text-primary-900 hover:bg-surface-warm rounded-lg font-semibold transition-colors">
+        <span>{t('nav.faq')}</span>
+        {isAr ? <ArrowLeft class="w-4 h-4 text-slate-500" aria-hidden="true" /> : <ArrowRight class="w-4 h-4 text-slate-500" aria-hidden="true" />}
+      </a>
+
+      <div class="pt-3.5 mt-2.5 border-t border-stone-200 flex flex-col gap-2.5">
+        <a
+          href={whatsappLink}
+          data-contact-whatsapp
+          target="_blank"
+          rel="noopener noreferrer"
+          class="flex items-center justify-center gap-2 bg-whatsapp hover:bg-whatsapp-hover text-white px-5 py-3 rounded-xl font-bold text-center shadow-sm transition-colors"
+        >
+          <MessageCircle class="w-5 h-5" aria-hidden="true" />
+          <span>{t('hero.cta')} ({t('hero.discountPill')})</span>
+        </a>
+        <a
+          href={`tel:${phone}`}
+          data-contact-tel
+          class="flex items-center justify-center gap-2 bg-primary-900 hover:bg-primary text-white px-5 py-3 rounded-xl font-bold text-center transition-colors"
+        >
+          <Phone class="w-5 h-5 text-accent-300" aria-hidden="true" />
+          <span>{t('hero.call')} (<span dir="ltr" data-contact-phone-display>{displayPhone}</span>)</span>
+        </a>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<script>
+  const toggle = document.getElementById('menu-toggle');
+  const menu = document.getElementById('mobile-menu');
+  const lines = toggle?.querySelectorAll('.hamburger-line');
+
+  function setMenuOpen(open) {
+    if (!menu || !toggle) return;
+    menu.classList.toggle('hidden', !open);
+    toggle.setAttribute('aria-expanded', String(open));
+    if (lines && lines.length === 3) {
+      lines[0].classList.toggle('rotate-45', open);
+      lines[0].classList.toggle('translate-y-[8px]', open);
+      lines[1].classList.toggle('opacity-0', open);
+      lines[2].classList.toggle('-rotate-45', open);
+      lines[2].classList.toggle('-translate-y-[8px]', open);
+    }
+  }
+
+  toggle?.addEventListener('click', () => {
+    const isOpen = toggle.getAttribute('aria-expanded') === 'true';
+    setMenuOpen(!isOpen);
+  });
+
+  document.querySelectorAll('.mobile-link').forEach((link) => {
+    link.addEventListener('click', () => setMenuOpen(false));
+  });
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && toggle?.getAttribute('aria-expanded') === 'true') {
+      setMenuOpen(false);
+      toggle.focus();
+    }
+  });
+</script>

@@ -1,0 +1,85 @@
+---
+import { useTranslations } from '../i18n/ui';
+import settings from '../data/settings.json';
+import { MessageCircle, Plus } from '@lucide/astro';
+
+interface Props {
+  lang: 'ar' | 'en';
+}
+
+const { lang } = Astro.props;
+const t = useTranslations(lang);
+const isAr = lang === 'ar';
+
+const faqs = [
+  { q: t('faq.q1'), a: t('faq.a1') },
+  { q: t('faq.q2'), a: t('faq.a2') },
+  { q: t('faq.q3'), a: t('faq.a3') },
+  { q: t('faq.q4'), a: t('faq.a4') },
+  { q: t('faq.q5'), a: t('faq.a5') },
+];
+
+const phone = settings.whatsappNumber;
+const whatsappMsg = isAr
+  ? encodeURIComponent('مرحباً، لدي سؤال إضافي حول خدمة نقل العفش')
+  : encodeURIComponent('Hello, I have a question about booking a furniture move');
+const whatsappLink = `https://wa.me/${phone}?text=${whatsappMsg}`;
+---
+
+<section id="faq" aria-labelledby="faq-heading" class="scroll-mt-28 py-12 md:py-24 bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid lg:grid-cols-12 gap-7 lg:gap-12 items-start">
+      <!-- Start Column: Section Header + Direct Dispatch Question Box -->
+      <div class="lg:col-span-5 text-start">
+        <p class="text-xs sm:text-sm font-semibold text-accent mb-2">
+          {t('faq.eyebrow')}
+        </p>
+        <h2 id="faq-heading" class="heading-section font-extrabold text-primary-900 tracking-tight">
+          {t('faq.title')}
+        </h2>
+        <p class="prose-pretty mt-2.5 text-slate-600 text-sm sm:text-lg leading-relaxed">
+          {t('faq.subtitle')}
+        </p>
+
+        <div class="dark-surface mt-6 sm:mt-8 p-5 sm:p-6 bg-primary-900 text-white rounded-2xl">
+          <h3 class="text-base sm:text-lg font-bold text-white mb-1.5">
+            {t('faq.moreTitle')}
+          </h3>
+          <p class="text-xs sm:text-sm text-slate-300 leading-relaxed mb-4 sm:mb-5">
+            {t('faq.moreDesc')}
+          </p>
+          <a
+            href={whatsappLink}
+            data-contact-whatsapp
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center justify-center gap-2 bg-whatsapp hover:bg-whatsapp-hover text-white font-bold px-5 py-3 rounded-xl text-sm shadow-sm transition-colors w-full sm:w-auto min-h-[44px]"
+          >
+            <MessageCircle class="w-4 h-4" aria-hidden="true" />
+            <span>{t('faq.moreBtn')}</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- End Column: Native <details> Accordion List -->
+      <div class="lg:col-span-7 space-y-3 sm:space-y-3.5">
+        {faqs.map((faq) => (
+          <details class="faq-item group bg-surface-warm rounded-2xl border border-stone-200 overflow-hidden">
+            <summary class="flex justify-between items-center gap-3 sm:gap-4 p-4 sm:p-6 cursor-pointer font-bold text-slate-900 list-none hover:text-accent transition-colors select-none [&::-webkit-details-marker]:hidden">
+              <span class="text-sm sm:text-lg leading-snug">{faq.q}</span>
+              <span
+                class="w-9 h-9 rounded-lg bg-white text-primary-900 flex items-center justify-center border border-stone-200 shrink-0"
+                aria-hidden="true"
+              >
+                <Plus class="w-4 h-4 transition-transform duration-200 group-open:rotate-45" />
+              </span>
+            </summary>
+            <div class="px-5 sm:px-6 pb-5 sm:pb-6 pt-4 text-slate-700 text-sm sm:text-base leading-relaxed border-t border-stone-200 bg-white">
+              {faq.a}
+            </div>
+          </details>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,170 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    color-scheme: light;
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+
+  html[dir='rtl'] {
+    font-family: 'IBM Plex Sans Arabic', 'Cairo', system-ui, -apple-system, sans-serif;
+  }
+
+  html[dir='ltr'] {
+    font-family: 'Inter', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  }
+
+  html[dir='rtl'] h1,
+  html[dir='rtl'] h2,
+  html[dir='rtl'] h3 {
+    font-family: 'Cairo', 'IBM Plex Sans Arabic', system-ui, sans-serif;
+  }
+
+  html[dir='ltr'] h1,
+  html[dir='ltr'] h2,
+  html[dir='ltr'] h3 {
+    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
+  }
+
+  body {
+    @apply bg-surface-warm text-slate-800 antialiased leading-relaxed selection:bg-accent-100 selection:text-accent-700;
+  }
+
+  /* Accessible keyboard focus indicator across light, dark, and forced-colors surfaces */
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 3px solid #8F5E06;
+    outline-offset: 3px;
+  }
+
+  .dark-surface :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible,
+  footer :where(a, button):focus-visible {
+    outline-color: #F2C96B;
+  }
+
+  .light-surface :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline-color: #8F5E06;
+  }
+
+  @media (forced-colors: active) {
+    :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+      outline: 3px solid Highlight;
+    }
+  }
+}
+
+@layer components {
+  .heading-hero {
+    font-size: clamp(2rem, 1.35rem + 2.4vw, 3.4rem);
+    line-height: 1.16;
+    text-wrap: balance;
+  }
+
+  .heading-section {
+    font-size: clamp(1.625rem, 1.25rem + 1.45vw, 2.5rem);
+    line-height: 1.22;
+    text-wrap: balance;
+  }
+
+  .prose-pretty {
+    text-wrap: pretty;
+  }
+
+  /* Accessible visually-hidden utility (keeps skip links visible on focus) */
+  .visually-hidden:where(:not(:focus-within, :active)) {
+    position: absolute !important;
+    clip-path: inset(50%) !important;
+    overflow: hidden !important;
+    width: 1px !important;
+    height: 1px !important;
+    margin: -1px !important;
+    padding: 0 !important;
+    border: 0 !important;
+    white-space: nowrap !important;
+  }
+
+  .skip-link:focus-visible {
+    position: fixed;
+    inset-block-start: 0.75rem;
+    inset-inline-start: 0.75rem;
+    z-index: 60;
+    background: #081B33;
+    color: #FFFFFF;
+    padding: 0.75rem 1.25rem;
+    border-radius: 0.75rem;
+    font-weight: 700;
+    font-size: 0.875rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+  }
+}
+
+/* Native Modal Dialog scroll lock & smooth top-layer entry/exit */
+dialog:modal {
+  overscroll-behavior: contain;
+}
+
+dialog::backdrop {
+  background: rgba(5, 17, 32, 0.85);
+  overflow: hidden;
+  overscroll-behavior: contain;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  dialog.lightbox-dialog {
+    opacity: 0;
+    transform: scale(0.97);
+    transition:
+      opacity 180ms ease-out,
+      transform 180ms ease-out,
+      display 180ms ease-out,
+      overlay 180ms ease-out;
+    transition-behavior: allow-discrete;
+  }
+
+  dialog.lightbox-dialog[open] {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@starting-style {
+  dialog.lightbox-dialog[open] {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+/* Native FAQ <details> open/close animation where supported */
+@supports (interpolate-size: allow-keywords) {
+  details.faq-item::details-content {
+    interpolate-size: allow-keywords;
+    overflow: clip;
+    contain: layout;
+  }
+
+  details.faq-item:not([open])::details-content {
+    block-size: 0;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    details.faq-item::details-content {
+      transition: block-size, content-visibility, display;
+      transition-duration: 0.25s;
+      transition-timing-function: ease-out;
+      transition-behavior: allow-discrete;
+    }
+  }
+}
+
+/* Brand-consistent form accent color */
+input[type='radio'],
+input[type='checkbox'] {
+  accent-color: #8F5E06;
+}

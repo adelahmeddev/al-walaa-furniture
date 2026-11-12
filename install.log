@@ -1,0 +1,30 @@
+npm error code ERESOLVE
+npm error ERESOLVE could not resolve
+npm error
+npm error While resolving: @astrojs/tailwind@6.0.2
+npm error Found: astro@7.3.5
+npm error node_modules/astro
+npm error   astro@"^7.3.5" from the root project
+npm error   peer astro@"^4 || ^5 || ^6 || ^7" from @lucide/astro@1.48.0
+npm error   node_modules/@lucide/astro
+npm error     @lucide/astro@"^1.48.0" from the root project
+npm error
+npm error Could not resolve dependency:
+npm error peer astro@"^3.0.0 || ^4.0.0 || ^5.0.0" from @astrojs/tailwind@6.0.2
+npm error node_modules/@astrojs/tailwind
+npm error   @astrojs/tailwind@"^6.0.2" from the root project
+npm error
+npm error Conflicting peer dependency: astro@5.18.2
+npm error node_modules/astro
+npm error   peer astro@"^3.0.0 || ^4.0.0 || ^5.0.0" from @astrojs/tailwind@6.0.2
+npm error   node_modules/@astrojs/tailwind
+npm error     @astrojs/tailwind@"^6.0.2" from the root project
+npm error
+npm error Fix the upstream dependency conflict, or retry
+npm error this command with --force or --legacy-peer-deps
+npm error to accept an incorrect (and potentially broken) dependency resolution.
+npm error
+npm error
+npm error For a full report see:
+npm error C:\Users\Adel Ahmed\AppData\Local\npm-cache\_logs\2026-09-28T03_11_59_258Z-eresolve-report.txt
+npm error A complete log of this run can be found in: C:\Users\Adel Ahmed\AppData\Local\npm-cache\_logs\2026-09-28T03_11_59_258Z-debug-0.log
