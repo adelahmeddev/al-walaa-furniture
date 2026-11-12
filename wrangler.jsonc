@@ -1,12 +1,12 @@
 {
-  "name": "al-walaa-furniture",
+  "name": "alwalaamoving",
   "compatibility_date": "2025-01-01",
   "pages_build_output_dir": "./dist",
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "alwalaa-db",
-      "database_id": "local-dev-db"
+      "database_id": "ccaa73d4-1426-4a94-9961-4120fc54f21d"
     }
   ]
 }
