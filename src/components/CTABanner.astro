@@ -1,6 +1,7 @@
 ---
 import { useTranslations } from '../i18n/ui';
-import settings from '../data/settings.json';
+import defaultSettings from '../data/settings.json';
+import { buildWhatsAppLink } from '../utils/settings';
 import { MessageCircle, Phone, ShieldCheck, Clock, Check } from '@lucide/astro';
 
 interface Props {
@@ -11,13 +12,14 @@ const { lang } = Astro.props;
 const t = useTranslations(lang);
 const isAr = lang === 'ar';
 
+const settings = defaultSettings;
 const phone = settings.phone;
 const displayPhone = settings.displayPhone;
 const message = isAr
-  ? encodeURIComponent('مرحباً، أريد الاستفادة من خصم الـ 20% وحجز موعد لنقل العفش')
-  : encodeURIComponent('Hello, I would like to claim the 20% discount and book a move');
+  ? 'مرحباً، أريد الاستفادة من خصم الـ 20% وحجز موعد لنقل العفش'
+  : 'Hello, I would like to claim the 20% discount and book a move';
 
-const whatsappLink = `https://wa.me/${settings.whatsappNumber}?text=${message}`;
+const whatsappLink = buildWhatsAppLink(settings.whatsappNumber, message);
 ---
 
 <section class="dark-surface py-12 md:py-24 bg-primary-900 text-white text-center border-t-4 border-accent-400">

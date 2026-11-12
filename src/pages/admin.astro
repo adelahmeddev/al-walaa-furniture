@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import defaultMedia from '../data/media.json';
 import defaultSettings from '../data/settings.json';
+import { SOCIAL_PLATFORMS } from '../utils/settings';
 import {
   Plus,
   Key,
@@ -219,49 +220,20 @@ const devKeyDefault = 'mover-dev-2024';
               </label>
             </div>
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div>
-                <label for="setting-social-facebook" class="text-xs font-bold text-slate-200 mb-1.5 block">Facebook</label>
-                <input
-                  type="url"
-                  id="setting-social-facebook"
-                  dir="ltr"
-                  placeholder="https://www.facebook.com/..."
-                  class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-3 text-sm font-mono text-white placeholder-slate-400 focus:border-accent-300"
-                />
-              </div>
-
-              <div>
-                <label for="setting-social-instagram" class="text-xs font-bold text-slate-200 mb-1.5 block">Instagram</label>
-                <input
-                  type="url"
-                  id="setting-social-instagram"
-                  dir="ltr"
-                  placeholder="https://www.instagram.com/..."
-                  class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-3 text-sm font-mono text-white placeholder-slate-400 focus:border-accent-300"
-                />
-              </div>
-
-              <div>
-                <label for="setting-social-tiktok" class="text-xs font-bold text-slate-200 mb-1.5 block">TikTok</label>
-                <input
-                  type="url"
-                  id="setting-social-tiktok"
-                  dir="ltr"
-                  placeholder="https://www.tiktok.com/@..."
-                  class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-3 text-sm font-mono text-white placeholder-slate-400 focus:border-accent-300"
-                />
-              </div>
-
-              <div>
-                <label for="setting-social-youtube" class="text-xs font-bold text-slate-200 mb-1.5 block">YouTube</label>
-                <input
-                  type="url"
-                  id="setting-social-youtube"
-                  dir="ltr"
-                  placeholder="https://www.youtube.com/@..."
-                  class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-3 text-sm font-mono text-white placeholder-slate-400 focus:border-accent-300"
-                />
-              </div>
+              {SOCIAL_PLATFORMS.map((platform) => (
+                <div>
+                  <label for={`setting-social-${platform.key}`} class="text-xs font-bold text-slate-200 mb-1.5 block">
+                    {platform.label}
+                  </label>
+                  <input
+                    type="url"
+                    id={`setting-social-${platform.key}`}
+                    dir="ltr"
+                    placeholder={`https://www.${platform.key}.com/...`}
+                    class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-3 text-sm font-mono text-white placeholder-slate-400 focus:border-accent-300"
+                  />
+                </div>
+              ))}
             </div>
             <p class="text-[11px] text-slate-400">اترك الحقل فارغاً لإخفاء أيقونة الحساب من الموقع، أو أدخل رابط https كامل لإظهارها.</p>
           </fieldset>

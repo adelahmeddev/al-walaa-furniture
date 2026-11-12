@@ -1,6 +1,7 @@
 ---
 import { useTranslations } from '../i18n/ui';
-import settings from '../data/settings.json';
+import defaultSettings from '../data/settings.json';
+import { buildWhatsAppLink } from '../utils/settings';
 import { Phone, MessageCircle } from '@lucide/astro';
 
 interface Props {
@@ -11,11 +12,12 @@ const { lang } = Astro.props;
 const t = useTranslations(lang);
 const isAr = lang === 'ar';
 
+const settings = defaultSettings;
 const phone = settings.phone;
 const message = isAr
-  ? encodeURIComponent('مرحباً، أود حجز خدمة نقل عفش')
-  : encodeURIComponent('Hello, I would like to book a furniture moving service');
-const whatsappLink = `https://wa.me/${settings.whatsappNumber}?text=${message}`;
+  ? 'مرحباً، أود حجز خدمة نقل عفش'
+  : 'Hello, I would like to book a furniture moving service';
+const whatsappLink = buildWhatsAppLink(settings.whatsappNumber, message);
 ---
 
 <!-- Desktop Floating Corner Actions (Non-intrusive, focus & hover accessible) -->
