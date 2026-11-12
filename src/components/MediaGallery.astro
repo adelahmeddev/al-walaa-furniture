@@ -57,10 +57,13 @@ const i18nClient = {
     <div class="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-3 -mx-4 px-4 md:mx-0 md:px-0 md:pb-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-6" id="media-grid">
       {items.map((item, index) => {
         const itemTitle = isAr ? item.title : (item.titleEn || item.title);
+        const itemAlt = isAr ? (item.alt || itemTitle) : (item.altEn || itemTitle);
         const itemDesc = isAr ? item.desc : (item.descEn || item.desc);
         const isVideo = item.type === 'video';
         const isFeatured = index === 0;
         const catLabel = getCategoryLabel(item.category);
+        const thumbSrc = item.thumbnail || item.src;
+        const webpSrc = thumbSrc.endsWith('.jpg') ? thumbSrc.replace(/\.jpg$/, '.webp') : '';
 
         return (
           <article
@@ -81,14 +84,18 @@ const i18nClient = {
                   isFeatured ? 'aspect-[16/10] lg:aspect-auto lg:min-h-[340px] lg:flex-1' : 'aspect-[16/10]'
                 }`}
               >
-                <img
-                  src={item.thumbnail || item.src}
-                  alt={itemTitle}
-                  width="800"
-                  height="500"
-                  loading="lazy"
-                  class="w-full h-full object-cover object-center group-hover:scale-[1.03] transition-transform duration-300"
-                />
+                <picture class="block w-full h-full">
+                  {webpSrc && <source srcset={webpSrc} type="image/webp" />}
+                  <img
+                    src={thumbSrc}
+                    alt={itemAlt}
+                    width="800"
+                    height="500"
+                    loading="lazy"
+                    decoding="async"
+                    class="w-full h-full object-cover object-center group-hover:scale-[1.03] transition-transform duration-300"
+                  />
+                </picture>
                 <div class="absolute inset-0 bg-gradient-to-t from-slate-950/65 via-transparent to-transparent" aria-hidden="true"></div>
 
                 <!-- Media Type Pill -->

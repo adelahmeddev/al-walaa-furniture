@@ -38,16 +38,19 @@ const roomSizes = [
 
 <section id="home" class="dark-surface relative pt-32 pb-12 sm:pt-36 md:pb-24 text-white overflow-hidden bg-primary-900">
   <!-- Ambient Background Image with Directional Readability Scrim -->
-  <div class="absolute inset-0 z-0" aria-hidden="true">
-    <img
-      src="/media/hero-moving-egypt.jpg"
-      alt=""
-      width="1600"
-      height="900"
-      fetchpriority="high"
-      class="w-full h-full object-cover object-center opacity-35"
-    />
-    <div class="absolute inset-0 bg-gradient-to-b from-primary-900/90 via-primary-900/85 to-primary-900"></div>
+  <div class="absolute inset-0 z-0">
+    <picture>
+      <source srcset="/media/hero-moving-egypt.webp" type="image/webp" />
+      <img
+        src="/media/hero-moving-egypt.jpg"
+        alt={isAr ? 'عمال شركة الولاء ينقلون عفش في شوارع القاهرة بسيارة مغلقة مبطنة' : 'Al Walaa Moving crew loading padded wrapped furniture into enclosed truck in Cairo'}
+        width="1600"
+        height="900"
+        fetchpriority="high"
+        class="w-full h-full object-cover object-center opacity-35"
+      />
+    </picture>
+    <div class="absolute inset-0 bg-gradient-to-b from-primary-900/90 via-primary-900/85 to-primary-900" aria-hidden="true"></div>
   </div>
 
   <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

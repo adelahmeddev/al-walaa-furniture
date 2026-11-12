@@ -1,20 +1,35 @@
 ---
 import '../styles/global.css';
 import { useTranslations } from '../i18n/ui';
+import { buildSeoSchemas } from '../utils/seo';
 
 interface Props {
   title: string;
   lang: 'ar' | 'en';
   description?: string;
+  ogImage?: string;
 }
 
-const { title, lang, description } = Astro.props;
+const { title, lang, description, ogImage = '/og-image.jpg' } = Astro.props;
 const t = useTranslations(lang);
 const dir = lang === 'ar' ? 'rtl' : 'ltr';
-const defaultDesc = lang === 'ar'
-  ? 'خدمة نقل أثاث احترافية في كل محافظات مصر. فك وتركيب، تغليف حراري، أوناش هيدروليكية، نقل محلي وسريع بأمان تام. احجز عبر واتساب.'
-  : 'Professional furniture moving service across Egypt. Dismantling, protective wrapping, hydraulic hoists, local and intercity moving. Book via WhatsApp.';
+const isAr = lang === 'ar';
+
+const defaultDesc = isAr
+  ? 'شركة نقل عفش في القاهرة والجيزة. فك وتركيب غرف ومطابخ، تغليف 5 طبقات، ونش رفع هيدروليكي حتى الدور 20، نقل بين المحافظات. ضمان مكتوب وسعر ثابت.'
+  : 'Professional furniture moving company in Cairo & all Egypt. 5-layer packing, hydraulic hoists to floor 20, carpentry reassembly. Written damage guarantee & fixed pricing.';
 const metaDesc = description || defaultDesc;
+
+const keywords = isAr
+  ? 'نقل عفش, شركة نقل عفش, نقل اثاث بالقاهرة, شركة نقل عفش بالجيزة, ونش رفع اثاث, تغليف عفش, فك وتركيب اثاث, شركة نقل موبيليا, نقل عفش التجمع الخامس, نقل عفش 6 اكتوبر, نقل عفش مدينة نصر, نقل عفش المعادي, نقل عفش بين المحافظات, ارخص شركة نقل عفش في مصر'
+  : 'furniture moving egypt, moving company cairo, furniture packing cairo, hydraulic furniture hoist egypt, office relocation cairo, Al Walaa moving';
+
+const siteOrigin = (Astro.site?.toString() || 'https://alwalaa-moving.com').replace(/\/$/, '');
+const canonicalUrl = new URL(Astro.url.pathname, siteOrigin).toString();
+const arUrl = `${siteOrigin}/`;
+const enUrl = `${siteOrigin}/en/`;
+const ogImageUrl = ogImage.startsWith('http') ? ogImage : `${siteOrigin}${ogImage}`;
+const schemas = buildSeoSchemas(lang, siteOrigin, canonicalUrl);
 ---
 
 <!doctype html>
@@ -26,17 +41,41 @@ const metaDesc = description || defaultDesc;
     <meta name="generator" content={Astro.generator} />
     <title>{title}</title>
 
-    <!-- SEO Meta Tags -->
+    <!-- SEO & Local Geo Meta Tags -->
     <meta name="description" content={metaDesc} />
+    <meta name="keywords" content={keywords} />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1" />
+    <meta name="geo.region" content="EG-C" />
+    <meta name="geo.placename" content="Cairo, Egypt" />
+    <link rel="canonical" href={canonicalUrl} />
+
+    <!-- Hreflang Language Alternates -->
+    <link rel="alternate" hreflang="ar-EG" href={arUrl} />
+    <link rel="alternate" hreflang="ar" href={arUrl} />
+    <link rel="alternate" hreflang="en" href={enUrl} />
+    <link rel="alternate" hreflang="x-default" href={arUrl} />
+
+    <!-- Open Graph / Social Preview -->
     <meta property="og:title" content={title} />
     <meta property="og:description" content={metaDesc} />
     <meta property="og:type" content="website" />
-    <meta property="og:locale" content={lang === 'ar' ? 'ar_EG' : 'en_US'} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:site_name" content={isAr ? 'شركة الولاء لنقل الأثاث' : 'Al Walaa Furniture Moving'} />
+    <meta property="og:locale" content={isAr ? 'ar_EG' : 'en_US'} />
+    <meta property="og:locale:alternate" content={isAr ? 'en_US' : 'ar_EG'} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={isAr ? 'شركة الولاء لنقل وتغليف الأثاث في القاهرة ومصر' : 'Al Walaa Furniture Moving in Cairo and Egypt'} />
+
+    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={metaDesc} />
-    <meta name="robots" content="index, follow" />
-    <link rel="canonical" href={Astro.url.href} />
+    <meta name="twitter:image" content={ogImageUrl} />
+
+    <!-- Preload Hero LCP Asset -->
+    <link rel="preload" as="image" href="/media/hero-moving-egypt.webp" type="image/webp" />
 
     <!-- Google Fonts: Arabic (IBM Plex Sans Arabic + Cairo Display) & English (Plus Jakarta Sans + Inter) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -45,6 +84,11 @@ const metaDesc = description || defaultDesc;
       href="https://fonts.googleapis.com/css2?family=Cairo:wght@700;800&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap"
       rel="stylesheet"
     />
+
+    <!-- JSON-LD Structured Data -->
+    {schemas.map((schema) => (
+      <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+    ))}
   </head>
   <body class="overflow-x-hidden min-h-screen flex flex-col bg-surface-warm text-slate-800">
     <a href="#main-content" class="skip-link visually-hidden">
@@ -71,7 +115,7 @@ const metaDesc = description || defaultDesc;
 
       // Initialize Lenis smooth scroll
       const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      let lenis = null;
+      let lenis: Lenis | null = null;
 
       if (!prefersReducedMotion) {
         lenis = new Lenis({
