@@ -163,7 +163,6 @@ export const ui = {
     'footer.location': 'القاهرة الكبرى والجيزة، ونقل لجميع المحافظات',
     'footer.hours': 'متاحون 24 ساعة طوال أيام الأسبوع',
     'footer.tagline': 'نقل آمن من الباب للباب',
-    'footer.admin': 'لوحة إدارة المعرض',
     'backtop': 'العودة إلى الأعلى',
   },
   en: {
@@ -323,7 +322,6 @@ export const ui = {
     'footer.location': 'Greater Cairo, Giza & All Egyptian Governorates',
     'footer.hours': 'Open 24 hours, 7 days a week',
     'footer.tagline': 'Door-to-door insured moving',
-    'footer.admin': 'Media Admin',
     'backtop': 'Back to top',
   },
 } as const;

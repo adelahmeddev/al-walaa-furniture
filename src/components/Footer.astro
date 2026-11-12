@@ -2,7 +2,7 @@
 import { useTranslations } from '../i18n/ui';
 import { getInitialSettings, getSocialLinks, buildWhatsAppLink, type SiteSettings } from '../utils/settings';
 import SocialIcon from './SocialIcon.astro';
-import { Phone, MapPin, Clock, MessageCircle, Lock } from '@lucide/astro';
+import { Phone, MapPin, Clock, MessageCircle } from '@lucide/astro';
 
 interface Props {
   lang: 'ar' | 'en';
@@ -151,11 +151,6 @@ const socialLinks = getSocialLinks(settings);
 
       <div class="flex items-center gap-4">
         <span>{t('footer.tagline')}</span>
-        <span aria-hidden="true">·</span>
-        <a href="/admin" class="text-slate-300 hover:text-white transition-colors inline-flex items-center gap-1.5 py-1">
-          <Lock class="w-3.5 h-3.5" aria-hidden="true" />
-          <span>{t('footer.admin')}</span>
-        </a>
       </div>
     </div>
   </div>
