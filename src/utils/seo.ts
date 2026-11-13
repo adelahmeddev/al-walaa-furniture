@@ -1,5 +1,95 @@
 import { getInitialSettings, type SiteSettings } from './settings';
 import { ui } from '../i18n/ui';
+import type { BlogPost, BlogFaqItem } from '../data/blog-posts';
+
+export interface BreadcrumbItem {
+  name: string;
+  url?: string;
+}
+
+export function buildBlogPostSchema(
+  post: BlogPost,
+  siteOrigin: string,
+  pageUrl: string
+): Record<string, unknown> {
+  const isAr = post.lang === 'ar';
+  const orgId = `${siteOrigin}/#organization`;
+  const coverUrl = post.coverImage.startsWith('http')
+    ? post.coverImage
+    : `${siteOrigin}${post.coverImage.startsWith('/') ? '' : '/'}${post.coverImage}`;
+
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    '@id': `${pageUrl}#article`,
+    headline: post.title,
+    description: post.description || post.excerpt,
+    image: [coverUrl],
+    datePublished: post.createdAt,
+    dateModified: post.updatedAt || post.createdAt,
+    inLanguage: isAr ? 'ar-EG' : 'en-US',
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': pageUrl,
+    },
+    author: {
+      '@type': 'Organization',
+      name: isAr ? 'فريق خبراء شركة الولاء لنقل الأثاث' : 'Al Walaa Moving Specialists',
+      url: siteOrigin,
+    },
+    publisher: {
+      '@type': 'Organization',
+      '@id': orgId,
+      name: isAr ? 'شركة الولاء لنقل الأثاث' : 'Al Walaa Furniture Moving',
+      logo: {
+        '@type': 'ImageObject',
+        url: `${siteOrigin}/logo.jpg`,
+      },
+    },
+    keywords: post.tags ? post.tags.join(', ') : undefined,
+    articleSection: post.category,
+  };
+}
+
+export function buildBlogFaqSchema(faq: BlogFaqItem[]): Record<string, unknown> | null {
+  if (!faq || faq.length === 0) return null;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faq.map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.answer,
+      },
+    })),
+  };
+}
+
+export function buildBreadcrumbSchema(
+  items: BreadcrumbItem[],
+  siteOrigin: string
+): Record<string, unknown> {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: items.map((item, index) => {
+      const fullUrl = item.url
+        ? item.url.startsWith('http')
+          ? item.url
+          : `${siteOrigin}${item.url.startsWith('/') ? '' : '/'}${item.url}`
+        : siteOrigin;
+
+      return {
+        '@type': 'ListItem',
+        position: index + 1,
+        name: item.name,
+        item: fullUrl,
+      };
+    }),
+  };
+}
 
 export function buildSeoSchemas(
   lang: 'ar' | 'en',

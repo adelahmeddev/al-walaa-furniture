@@ -1,0 +1,43 @@
+---
+import { ListOrdered } from '@lucide/astro';
+
+export interface TocItem {
+  id: string;
+  text: string;
+  level: number;
+}
+
+interface Props {
+  items: TocItem[];
+  lang: 'ar' | 'en';
+}
+
+const { items, lang } = Astro.props;
+const isAr = lang === 'ar';
+if (!items || items.length === 0) return null;
+---
+
+<aside class="my-8 p-5 sm:p-6 rounded-2xl bg-stone-50 border border-stone-200/90 shadow-2xs">
+  <div class="flex items-center gap-2 mb-3.5 pb-2.5 border-b border-stone-200">
+    <ListOrdered class="w-4 h-4 text-accent" aria-hidden="true" />
+    <h2 class="text-sm font-bold text-slate-900 tracking-tight">
+      {isAr ? 'فهرس ومحتويات الدليل' : 'Table of Contents'}
+    </h2>
+  </div>
+
+  <nav aria-label={isAr ? 'فهرس المقال' : 'Table of contents'}>
+    <ul class="space-y-2 text-sm">
+      {items.map((item) => (
+        <li class={item.level === 3 ? 'ltr:pl-4 rtl:pr-4 text-xs' : 'font-medium'}>
+          <a
+            href={`#${item.id}`}
+            class="text-slate-600 hover:text-accent transition-colors flex items-start gap-1.5 py-0.5"
+          >
+            <span class="text-accent/60 shrink-0 select-none">•</span>
+            <span class="hover:underline">{item.text}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </nav>
+</aside>

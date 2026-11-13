@@ -9,10 +9,32 @@ interface Props {
   lang: 'ar' | 'en';
   description?: string;
   ogImage?: string;
+  ogType?: 'website' | 'article';
+  articleMeta?: {
+    publishedTime?: string;
+    modifiedTime?: string;
+    section?: string;
+    tags?: string[];
+  };
+  customSchemas?: Record<string, unknown>[];
   settings?: SiteSettings;
+  alternateAr?: string;
+  alternateEn?: string;
 }
 
-const { title, lang, description, ogImage = '/og-image.jpg', settings = getInitialSettings() } = Astro.props;
+const {
+  title,
+  lang,
+  description,
+  ogImage = '/og-image.jpg',
+  ogType = 'website',
+  articleMeta,
+  customSchemas,
+  settings = getInitialSettings(),
+  alternateAr,
+  alternateEn,
+} = Astro.props;
+
 const t = useTranslations(lang);
 const dir = lang === 'ar' ? 'rtl' : 'ltr';
 const isAr = lang === 'ar';
@@ -28,10 +50,23 @@ const keywords = isAr
 
 const siteOrigin = (Astro.site?.toString() || 'https://alwalaamoving.com').replace(/\/$/, '');
 const canonicalUrl = new URL(Astro.url.pathname, siteOrigin).toString();
-const arUrl = `${siteOrigin}/`;
-const enUrl = `${siteOrigin}/en/`;
-const ogImageUrl = ogImage.startsWith('http') ? ogImage : `${siteOrigin}${ogImage}`;
-const schemas = buildSeoSchemas(lang, siteOrigin, canonicalUrl, settings);
+
+const pathname = Astro.url.pathname;
+const cleanPath = pathname.replace(/\/$/, '') || '/';
+const defaultArPath = isAr ? cleanPath : (cleanPath.replace(/^\/en/, '') || '/');
+const defaultEnPath = isAr ? `/en${cleanPath === '/' ? '/' : cleanPath}` : cleanPath;
+
+const arUrl = alternateAr
+  ? (alternateAr.startsWith('http') ? alternateAr : `${siteOrigin}${alternateAr}`)
+  : `${siteOrigin}${defaultArPath === '/' ? '/' : defaultArPath}`;
+const enUrl = alternateEn
+  ? (alternateEn.startsWith('http') ? alternateEn : `${siteOrigin}${alternateEn}`)
+  : `${siteOrigin}${defaultEnPath === '/' ? '/' : defaultEnPath}`;
+
+const ogImageUrl = ogImage.startsWith('http') ? ogImage : `${siteOrigin}${ogImage.startsWith('/') ? '' : '/'}${ogImage}`;
+const schemas = customSchemas && customSchemas.length > 0
+  ? customSchemas
+  : buildSeoSchemas(lang, siteOrigin, canonicalUrl, settings);
 ---
 
 <!doctype html>
@@ -60,7 +95,19 @@ const schemas = buildSeoSchemas(lang, siteOrigin, canonicalUrl, settings);
     <!-- Open Graph / Social Preview -->
     <meta property="og:title" content={title} />
     <meta property="og:description" content={metaDesc} />
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={ogType} />
+    {ogType === 'article' && articleMeta?.publishedTime && (
+      <meta property="article:published_time" content={articleMeta.publishedTime} />
+    )}
+    {ogType === 'article' && articleMeta?.modifiedTime && (
+      <meta property="article:modified_time" content={articleMeta.modifiedTime} />
+    )}
+    {ogType === 'article' && articleMeta?.section && (
+      <meta property="article:section" content={articleMeta.section} />
+    )}
+    {ogType === 'article' && articleMeta?.tags && articleMeta.tags.map((tag) => (
+      <meta property="article:tag" content={tag} />
+    ))}
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:site_name" content={isAr ? 'شركة الولاء لنقل الأثاث' : 'Al Walaa Furniture Moving'} />
     <meta property="og:locale" content={isAr ? 'ar_EG' : 'en_US'} />

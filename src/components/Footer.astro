@@ -14,6 +14,12 @@ const t = useTranslations(lang);
 const year = new Date().getFullYear();
 const isAr = lang === 'ar';
 
+const pathname = Astro.url.pathname;
+const isHome = isAr ? (pathname === '/' || pathname === '') : (pathname === '/en' || pathname === '/en/');
+const homeUrl = isAr ? '/' : '/en/';
+const sectionPrefix = isHome ? '' : homeUrl;
+const blogUrl = isAr ? '/blog' : '/en/blog';
+
 const phone = settings.phone;
 const displayPhone = settings.displayPhone;
 const message = isAr
@@ -87,27 +93,32 @@ const socialLinks = getSocialLinks(settings);
           {t('nav.services')}
         </h3>
         <ul class="space-y-2.5 text-slate-300 text-sm">
-          <li><a href="#services" class="hover:text-accent-300 transition-colors py-0.5 inline-block">{t('services.local')}</a></li>
-          <li><a href="#services" class="hover:text-accent-300 transition-colors py-0.5 inline-block">{t('services.cities')}</a></li>
-          <li><a href="#services" class="hover:text-accent-300 transition-colors py-0.5 inline-block">{t('services.heavy')}</a></li>
-          <li><a href="#services" class="hover:text-accent-300 transition-colors py-0.5 inline-block">{t('services.install')}</a></li>
-          <li><a href="#services" class="hover:text-accent-300 transition-colors py-0.5 inline-block">{t('services.pack')}</a></li>
-          <li><a href="#services" class="hover:text-accent-300 transition-colors py-0.5 inline-block">{t('services.storage')}</a></li>
+          <li><a href={`${sectionPrefix}#services`} class="hover:text-accent-300 transition-colors py-0.5 inline-block">{t('services.local')}</a></li>
+          <li><a href={`${sectionPrefix}#services`} class="hover:text-accent-300 transition-colors py-0.5 inline-block">{t('services.cities')}</a></li>
+          <li><a href={`${sectionPrefix}#services`} class="hover:text-accent-300 transition-colors py-0.5 inline-block">{t('services.heavy')}</a></li>
+          <li><a href={`${sectionPrefix}#services`} class="hover:text-accent-300 transition-colors py-0.5 inline-block">{t('services.install')}</a></li>
+          <li><a href={`${sectionPrefix}#services`} class="hover:text-accent-300 transition-colors py-0.5 inline-block">{t('services.pack')}</a></li>
+          <li><a href={`${sectionPrefix}#services`} class="hover:text-accent-300 transition-colors py-0.5 inline-block">{t('services.storage')}</a></li>
         </ul>
       </div>
 
-      <!-- Quick Links -->
+      <!-- Quick Links & Blog -->
       <div>
         <h3 class="text-sm font-bold text-white uppercase tracking-wider mb-4">
           {t('footer.quickLinks')}
         </h3>
         <ul class="space-y-2.5 text-slate-300 text-sm">
-          <li><a href="#home" class="hover:text-accent-300 transition-colors py-0.5 inline-block">{t('nav.home')}</a></li>
-          <li><a href="#gallery" class="hover:text-accent-300 transition-colors py-0.5 inline-block">{t('nav.gallery')}</a></li>
-          <li><a href="#whyus" class="hover:text-accent-300 transition-colors py-0.5 inline-block">{t('nav.whyus')}</a></li>
-          <li><a href="#howitworks" class="hover:text-accent-300 transition-colors py-0.5 inline-block">{t('nav.howitworks')}</a></li>
-          <li><a href="#areas" class="hover:text-accent-300 transition-colors py-0.5 inline-block">{t('nav.areas')}</a></li>
-          <li><a href="#faq" class="hover:text-accent-300 transition-colors py-0.5 inline-block">{t('nav.faq')}</a></li>
+          <li><a href={isHome ? '#home' : homeUrl} class="hover:text-accent-300 transition-colors py-0.5 inline-block">{t('nav.home')}</a></li>
+          <li><a href={`${sectionPrefix}#gallery`} class="hover:text-accent-300 transition-colors py-0.5 inline-block">{t('nav.gallery')}</a></li>
+          <li><a href={`${sectionPrefix}#whyus`} class="hover:text-accent-300 transition-colors py-0.5 inline-block">{t('nav.whyus')}</a></li>
+          <li><a href={`${sectionPrefix}#howitworks`} class="hover:text-accent-300 transition-colors py-0.5 inline-block">{t('nav.howitworks')}</a></li>
+          <li><a href={`${sectionPrefix}#areas`} class="hover:text-accent-300 transition-colors py-0.5 inline-block">{t('nav.areas')}</a></li>
+          <li><a href={`${sectionPrefix}#faq`} class="hover:text-accent-300 transition-colors py-0.5 inline-block">{t('nav.faq')}</a></li>
+          <li class="pt-2 border-t border-white/10">
+            <a href={blogUrl} class="text-accent-300 font-bold hover:text-white transition-colors py-0.5 inline-block">
+              {t('nav.blog')} — {t('nav.blogGuide')}
+            </a>
+          </li>
         </ul>
       </div>
 

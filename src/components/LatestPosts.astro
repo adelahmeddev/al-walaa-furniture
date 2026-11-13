@@ -1,0 +1,56 @@
+---
+import type { BlogPost } from '../data/blog-posts';
+import BlogCard from './BlogCard.astro';
+import { ArrowLeft, ArrowRight, BookOpen } from '@lucide/astro';
+
+interface Props {
+  posts: BlogPost[];
+  lang: 'ar' | 'en';
+}
+
+const { posts, lang } = Astro.props;
+const isAr = lang === 'ar';
+const blogUrl = isAr ? '/blog' : '/en/blog';
+
+if (!posts || posts.length === 0) return null;
+const displayPosts = posts.slice(0, 3);
+---
+
+<section id="blog-preview" class="py-16 sm:py-24 bg-surface-warm border-t border-stone-200/80 relative">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Section Header -->
+    <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+      <div class="space-y-3 max-w-2xl">
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent-100 text-accent-800 text-xs font-bold">
+          <BookOpen class="w-3.5 h-3.5" aria-hidden="true" />
+          <span>{isAr ? 'دليل وخبرات النقل' : 'Moving Knowledge Hub'}</span>
+        </div>
+
+        <h2 class="heading-section font-extrabold text-primary-900 tracking-tight">
+          {isAr ? 'أحدث نصائح ودليل نقل الأثاث في مصر' : 'Latest Tips & Moving Guides in Egypt'}
+        </h2>
+
+        <p class="text-slate-600 text-sm sm:text-base leading-relaxed">
+          {isAr
+            ? 'مقالات متخصصة تكشف لك أسرار حساب التكاليف بدقة، متى تستخدم الونش الهيدروليكي، وكيفية حماية أثاثك الحساس بدون أي خدش.'
+            : 'Expert guides revealing real cost breakdowns, when to book hydraulic hoists, and how 5-layer packing protects your furniture.'}
+        </p>
+      </div>
+
+      <a
+        href={blogUrl}
+        class="inline-flex items-center gap-2 self-start md:self-end px-5 py-2.5 rounded-xl bg-primary-900 hover:bg-primary text-white text-xs sm:text-sm font-bold shadow-xs transition-all active:scale-[0.98] shrink-0"
+      >
+        <span>{isAr ? 'عرض جميع مقالات المدونة' : 'Browse All Guides'}</span>
+        {isAr ? <ArrowLeft class="w-4 h-4" aria-hidden="true" /> : <ArrowRight class="w-4 h-4" aria-hidden="true" />}
+      </a>
+    </div>
+
+    <!-- Articles Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+      {displayPosts.map((post) => (
+        <BlogCard post={post} lang={lang} />
+      ))}
+    </div>
+  </div>
+</section>

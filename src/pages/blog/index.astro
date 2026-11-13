@@ -1,0 +1,122 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import Header from '../../components/Header.astro';
+import Footer from '../../components/Footer.astro';
+import Breadcrumbs from '../../components/Breadcrumbs.astro';
+import BlogCard from '../../components/BlogCard.astro';
+import BlogCTA from '../../components/BlogCTA.astro';
+import WhatsAppButton from '../../components/WhatsAppButton.astro';
+import { getBlogPosts, getRuntimeEnv, getSiteSettings } from '../../utils/db';
+import { buildBreadcrumbSchema } from '../../utils/seo';
+import { BookOpen, Sparkles } from '@lucide/astro';
+
+export const prerender = false;
+
+const lang = 'ar';
+const { db } = getRuntimeEnv(Astro.locals);
+const [settings, allPosts] = await Promise.all([
+  getSiteSettings(db),
+  getBlogPosts(db, { lang, publishedOnly: true }),
+]);
+
+const featuredPost = allPosts.find((p) => p.featured) || allPosts[0];
+const regularPosts = featuredPost ? allPosts.filter((p) => p.id !== featuredPost.id) : allPosts;
+
+const siteOrigin = (Astro.site?.toString() || 'https://alwalaamoving.com').replace(/\/$/, '');
+const pageUrl = `${siteOrigin}/blog`;
+
+const breadcrumbItems = [
+  { name: 'الرئيسية', url: '/' },
+  { name: 'المدونة ودليل نقل العفش', url: '/blog' },
+];
+
+const breadcrumbSchema = buildBreadcrumbSchema(breadcrumbItems, siteOrigin);
+
+const collectionPageSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: 'مدونة ودليل نقل العفش في مصر — شركة الولاء',
+  description: 'دليل متخصص يغطي أسعار نقل الأثاث في مصر، أوناش الرفع الهيدروليكية، التغليف الفندقي 5 طبقات، وشروط نقل الفلل والكمبوندات.',
+  url: pageUrl,
+  inLanguage: 'ar-EG',
+};
+
+const schemas = [collectionPageSchema, breadcrumbSchema];
+
+Astro.response.headers.set('Cache-Control', 'no-store');
+---
+
+<Layout
+  title="مدونة ودليل نقل العفش في مصر 2026 | أسعار، أوناش وتغليف — شركة الولاء"
+  description="دليل شامل يغطي أسعار نقل العفش في القاهرة والجيزة والمحافظات لعام 2026، أوناش الرفع الهيدروليكية حتى الدور 20، خطوات التغليف بـ 5 طبقات حماية، وشروط نقل الكمبوندات."
+  lang={lang}
+  settings={settings}
+  customSchemas={schemas}
+  alternateAr="/blog"
+  alternateEn="/en/blog"
+>
+  <Header lang={lang} settings={settings} />
+
+  <main id="main-content" class="pt-28 sm:pt-32 pb-20 bg-surface-warm min-h-screen">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <!-- Breadcrumbs -->
+      <Breadcrumbs items={breadcrumbItems} lang={lang} />
+
+      <!-- Page Header Banner -->
+      <div class="text-center max-w-3xl mx-auto mb-12 sm:mb-16 space-y-4">
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent-100 text-accent-800 text-xs sm:text-sm font-bold border border-accent-200">
+          <BookOpen class="w-4 h-4" aria-hidden="true" />
+          <span>مركز المعرفة ودليل نقل العفش في مصر</span>
+        </div>
+
+        <h1 class="heading-hero font-extrabold text-primary-900 tracking-tight">
+          مدونة ودليل نقل الأثاث في مصر
+        </h1>
+
+        <p class="text-slate-600 text-base sm:text-lg leading-relaxed">
+          مقالات إرشادية وتفصيلية تساعدك على معرفة التكلفة الحقيقية لنقل منزلك، حماية الأجهزة الحساسة، واختيار حل الرفع الأنسب بدون خدش واحد.
+        </p>
+      </div>
+
+      <!-- Featured Post Banner (if available) -->
+      {featuredPost && (
+        <section class="mb-14 sm:mb-16">
+          <div class="flex items-center gap-2 mb-4">
+            <Sparkles class="w-4 h-4 text-accent" aria-hidden="true" />
+            <h2 class="text-xs sm:text-sm font-extrabold text-slate-500 uppercase tracking-wider">
+              المقال الأبرز لقراء هذا الأسبوع
+            </h2>
+          </div>
+          <BlogCard post={featuredPost} lang={lang} featured={true} />
+        </section>
+      )}
+
+      <!-- All Posts Section -->
+      <section class="mb-14">
+        <div class="flex items-center justify-between mb-8 pb-3 border-b border-stone-200">
+          <h2 class="text-xl sm:text-2xl font-extrabold text-primary-900 tracking-tight">
+            جميع المقالات والأدلة الإرشادية ({allPosts.length})
+          </h2>
+        </div>
+
+        {regularPosts.length > 0 ? (
+          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+            {regularPosts.map((post) => (
+              <BlogCard post={post} lang={lang} />
+            ))}
+          </div>
+        ) : (
+          <div class="text-center py-12 bg-white rounded-2xl border border-stone-200 text-slate-500">
+            لا توجد مقالات حالياً في هذا القسم.
+          </div>
+        )}
+      </section>
+
+      <!-- Conversion CTA -->
+      <BlogCTA lang={lang} settings={settings} />
+    </div>
+  </main>
+
+  <WhatsAppButton lang={lang} settings={settings} />
+  <Footer lang={lang} settings={settings} />
+</Layout>

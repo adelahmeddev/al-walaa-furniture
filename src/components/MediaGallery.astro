@@ -177,7 +177,7 @@ function getCategoryLabel(cat: string): string {
   const descEl = document.getElementById('lightbox-desc');
   const container = document.getElementById('lightbox-media-container');
 
-  function openLightbox(type, src, title, desc) {
+  function openLightbox(type: string, src: string, title: string, desc: string) {
     if (!(dialog instanceof HTMLDialogElement) || !container || !titleEl || !descEl) return;
 
     titleEl.textContent = title || '';
@@ -224,7 +224,7 @@ function getCategoryLabel(cat: string): string {
 
   // Fallback light-dismiss for Safari / browsers lacking closedby="any"
   if (dialog instanceof HTMLDialogElement && !('closedBy' in HTMLDialogElement.prototype)) {
-    const isOutside = (e, el) => {
+    const isOutside = (e: MouseEvent, el: HTMLElement) => {
       const r = el.getBoundingClientRect();
       return e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom;
     };

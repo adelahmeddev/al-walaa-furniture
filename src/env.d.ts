@@ -2,9 +2,11 @@
 import type { D1Database } from '@cloudflare/workers-types';
 import type { Runtime } from '@astrojs/cloudflare';
 
-declare namespace App {
-  interface Locals extends Runtime<{
-    DB?: D1Database;
-    ADMIN_KEY?: string;
-  }> {}
+declare global {
+  namespace App {
+    interface Locals extends Runtime<{
+      DB?: D1Database;
+      ADMIN_KEY?: string;
+    }> {}
+  }
 }

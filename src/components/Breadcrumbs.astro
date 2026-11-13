@@ -1,0 +1,68 @@
+---
+import { ChevronLeft, ChevronRight, Home } from '@lucide/astro';
+
+export interface BreadcrumbItem {
+  name: string;
+  url?: string;
+}
+
+interface Props {
+  items: BreadcrumbItem[];
+  lang: 'ar' | 'en';
+}
+
+const { items, lang } = Astro.props;
+const isAr = lang === 'ar';
+---
+
+<nav aria-label={isAr ? 'مسار التصفح' : 'Breadcrumbs'} class="w-full mb-6">
+  <ol
+    itemscope
+    itemtype="https://schema.org/BreadcrumbList"
+    class="flex flex-wrap items-center gap-1.5 sm:gap-2 text-xs sm:text-sm text-slate-500 bg-white/80 backdrop-blur-xs py-2.5 px-3.5 sm:px-4 rounded-xl border border-stone-200/80 shadow-2xs"
+  >
+    {items.map((item, index) => {
+      const isLast = index === items.length - 1;
+      const isFirst = index === 0;
+
+      return (
+        <li
+          itemprop="itemListElement"
+          itemscope
+          itemtype="https://schema.org/ListItem"
+          class="inline-flex items-center gap-1.5 sm:gap-2"
+        >
+          {item.url && !isLast ? (
+            <a
+              itemprop="item"
+              href={item.url}
+              class="inline-flex items-center gap-1 text-slate-600 hover:text-accent font-medium transition-colors"
+            >
+              {isFirst && <Home class="w-3.5 h-3.5 shrink-0 text-slate-400" aria-hidden="true" />}
+              <span itemprop="name">{item.name}</span>
+            </a>
+          ) : (
+            <span
+              itemprop="name"
+              class={`font-semibold text-slate-800 line-clamp-1 max-w-[240px] sm:max-w-md ${isLast ? 'text-primary-900' : ''}`}
+              aria-current={isLast ? 'page' : undefined}
+            >
+              {item.name}
+            </span>
+          )}
+          <meta itemprop="position" content={String(index + 1)} />
+
+          {!isLast && (
+            <span class="text-stone-300 shrink-0" aria-hidden="true">
+              {isAr ? (
+                <ChevronLeft class="w-3.5 h-3.5 text-stone-400" />
+              ) : (
+                <ChevronRight class="w-3.5 h-3.5 text-stone-400" />
+              )}
+            </span>
+          )}
+        </li>
+      );
+    })}
+  </ol>
+</nav>

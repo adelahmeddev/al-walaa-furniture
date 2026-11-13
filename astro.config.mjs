@@ -19,7 +19,12 @@ export default defineConfig({
   integrations: [
     tailwind(),
     sitemap({
-      customPages: [`${siteUrl}/`, `${siteUrl}/en/`],
+      customPages: [
+        `${siteUrl}/`,
+        `${siteUrl}/en/`,
+        `${siteUrl}/blog`,
+        `${siteUrl}/en/blog`,
+      ],
       filter: (page) => !page.includes('/admin') && !page.includes('/api/'),
       i18n: {
         defaultLocale: 'ar',

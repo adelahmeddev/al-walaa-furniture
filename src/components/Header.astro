@@ -12,7 +12,20 @@ interface Props {
 const { lang, settings = getInitialSettings() } = Astro.props;
 const t = useTranslations(lang);
 const isAr = lang === 'ar';
-const switchUrl = isAr ? '/en/' : '/';
+
+const pathname = Astro.url.pathname;
+const isHome = isAr ? (pathname === '/' || pathname === '') : (pathname === '/en' || pathname === '/en/');
+const homeUrl = isAr ? '/' : '/en/';
+const sectionPrefix = isHome ? '' : homeUrl;
+const isBlogActive = pathname.startsWith('/blog') || pathname.startsWith('/en/blog');
+const blogUrl = isAr ? '/blog' : '/en/blog';
+
+let switchUrl = isAr ? '/en/' : '/';
+if (pathname.startsWith('/blog')) {
+  switchUrl = pathname.replace(/^\/blog/, '/en/blog');
+} else if (pathname.startsWith('/en/blog')) {
+  switchUrl = pathname.replace(/^\/en\/blog/, '/blog') || '/blog';
+}
 const switchText = isAr ? 'English' : 'عربي';
 
 const phone = settings.phone;
@@ -111,38 +124,50 @@ const socialLinks = getSocialLinks(settings);
         <nav aria-label={t('nav.label')} class="hidden lg:block">
           <ul class="flex items-center gap-4 xl:gap-6 font-semibold text-slate-700 text-sm">
             <li>
-              <a href="#home" class="whitespace-nowrap py-1.5 hover:text-accent transition-colors">
+              <a href={isHome ? '#home' : homeUrl} class="whitespace-nowrap py-1.5 hover:text-accent transition-colors">
                 {t('nav.home')}
               </a>
             </li>
             <li>
-              <a href="#gallery" class="whitespace-nowrap py-1.5 hover:text-accent transition-colors">
+              <a href={`${sectionPrefix}#gallery`} class="whitespace-nowrap py-1.5 hover:text-accent transition-colors">
                 {t('nav.gallery')}
               </a>
             </li>
             <li>
-              <a href="#services" class="whitespace-nowrap py-1.5 hover:text-accent transition-colors">
+              <a href={`${sectionPrefix}#services`} class="whitespace-nowrap py-1.5 hover:text-accent transition-colors">
                 {t('nav.services')}
               </a>
             </li>
             <li>
-              <a href="#whyus" class="whitespace-nowrap py-1.5 hover:text-accent transition-colors">
+              <a href={`${sectionPrefix}#whyus`} class="whitespace-nowrap py-1.5 hover:text-accent transition-colors">
                 {t('nav.whyus')}
               </a>
             </li>
             <li>
-              <a href="#howitworks" class="whitespace-nowrap py-1.5 hover:text-accent transition-colors">
+              <a href={`${sectionPrefix}#howitworks`} class="whitespace-nowrap py-1.5 hover:text-accent transition-colors">
                 {t('nav.howitworks')}
               </a>
             </li>
             <li>
-              <a href="#areas" class="whitespace-nowrap py-1.5 hover:text-accent transition-colors">
+              <a href={`${sectionPrefix}#areas`} class="whitespace-nowrap py-1.5 hover:text-accent transition-colors">
                 {t('nav.areas')}
               </a>
             </li>
             <li>
-              <a href="#faq" class="whitespace-nowrap py-1.5 hover:text-accent transition-colors">
+              <a href={`${sectionPrefix}#faq`} class="whitespace-nowrap py-1.5 hover:text-accent transition-colors">
                 {t('nav.faq')}
+              </a>
+            </li>
+            <li>
+              <a
+                href={blogUrl}
+                class={`whitespace-nowrap py-1 px-2.5 rounded-lg transition-colors ${
+                  isBlogActive
+                    ? 'bg-accent-100 text-accent-800 font-bold'
+                    : 'text-primary-900 font-bold hover:text-accent'
+                }`}
+              >
+                {t('nav.blog')}
               </a>
             </li>
           </ul>
@@ -212,33 +237,44 @@ const socialLinks = getSocialLinks(settings);
   <!-- Mobile Collapsible Menu -->
   <div id="mobile-menu" class="lg:hidden hidden bg-white text-slate-800 border-t border-stone-200 shadow-lg max-h-[calc(100dvh-7rem)] overflow-y-auto">
     <nav aria-label={t('nav.label')} class="px-4 py-4 space-y-1">
-      <a href="#home" class="mobile-link flex items-center justify-between px-4 py-2.5 text-slate-800 hover:text-primary-900 hover:bg-surface-warm rounded-lg font-semibold transition-colors">
+      <a href={isHome ? '#home' : homeUrl} class="mobile-link flex items-center justify-between px-4 py-2.5 text-slate-800 hover:text-primary-900 hover:bg-surface-warm rounded-lg font-semibold transition-colors">
         <span>{t('nav.home')}</span>
         {isAr ? <ArrowLeft class="w-4 h-4 text-slate-500" aria-hidden="true" /> : <ArrowRight class="w-4 h-4 text-slate-500" aria-hidden="true" />}
       </a>
-      <a href="#gallery" class="mobile-link flex items-center justify-between px-4 py-2.5 text-slate-800 hover:text-primary-900 hover:bg-surface-warm rounded-lg font-semibold transition-colors">
+      <a href={`${sectionPrefix}#gallery`} class="mobile-link flex items-center justify-between px-4 py-2.5 text-slate-800 hover:text-primary-900 hover:bg-surface-warm rounded-lg font-semibold transition-colors">
         <span>{t('nav.gallery')}</span>
         {isAr ? <ArrowLeft class="w-4 h-4 text-slate-500" aria-hidden="true" /> : <ArrowRight class="w-4 h-4 text-slate-500" aria-hidden="true" />}
       </a>
-      <a href="#services" class="mobile-link flex items-center justify-between px-4 py-2.5 text-slate-800 hover:text-primary-900 hover:bg-surface-warm rounded-lg font-semibold transition-colors">
+      <a href={`${sectionPrefix}#services`} class="mobile-link flex items-center justify-between px-4 py-2.5 text-slate-800 hover:text-primary-900 hover:bg-surface-warm rounded-lg font-semibold transition-colors">
         <span>{t('nav.services')}</span>
         {isAr ? <ArrowLeft class="w-4 h-4 text-slate-500" aria-hidden="true" /> : <ArrowRight class="w-4 h-4 text-slate-500" aria-hidden="true" />}
       </a>
-      <a href="#whyus" class="mobile-link flex items-center justify-between px-4 py-2.5 text-slate-800 hover:text-primary-900 hover:bg-surface-warm rounded-lg font-semibold transition-colors">
+      <a href={`${sectionPrefix}#whyus`} class="mobile-link flex items-center justify-between px-4 py-2.5 text-slate-800 hover:text-primary-900 hover:bg-surface-warm rounded-lg font-semibold transition-colors">
         <span>{t('nav.whyus')}</span>
         {isAr ? <ArrowLeft class="w-4 h-4 text-slate-500" aria-hidden="true" /> : <ArrowRight class="w-4 h-4 text-slate-500" aria-hidden="true" />}
       </a>
-      <a href="#howitworks" class="mobile-link flex items-center justify-between px-4 py-2.5 text-slate-800 hover:text-primary-900 hover:bg-surface-warm rounded-lg font-semibold transition-colors">
+      <a href={`${sectionPrefix}#howitworks`} class="mobile-link flex items-center justify-between px-4 py-2.5 text-slate-800 hover:text-primary-900 hover:bg-surface-warm rounded-lg font-semibold transition-colors">
         <span>{t('nav.howitworks')}</span>
         {isAr ? <ArrowLeft class="w-4 h-4 text-slate-500" aria-hidden="true" /> : <ArrowRight class="w-4 h-4 text-slate-500" aria-hidden="true" />}
       </a>
-      <a href="#areas" class="mobile-link flex items-center justify-between px-4 py-2.5 text-slate-800 hover:text-primary-900 hover:bg-surface-warm rounded-lg font-semibold transition-colors">
+      <a href={`${sectionPrefix}#areas`} class="mobile-link flex items-center justify-between px-4 py-2.5 text-slate-800 hover:text-primary-900 hover:bg-surface-warm rounded-lg font-semibold transition-colors">
         <span>{t('nav.areas')}</span>
         {isAr ? <ArrowLeft class="w-4 h-4 text-slate-500" aria-hidden="true" /> : <ArrowRight class="w-4 h-4 text-slate-500" aria-hidden="true" />}
       </a>
-      <a href="#faq" class="mobile-link flex items-center justify-between px-4 py-2.5 text-slate-800 hover:text-primary-900 hover:bg-surface-warm rounded-lg font-semibold transition-colors">
+      <a href={`${sectionPrefix}#faq`} class="mobile-link flex items-center justify-between px-4 py-2.5 text-slate-800 hover:text-primary-900 hover:bg-surface-warm rounded-lg font-semibold transition-colors">
         <span>{t('nav.faq')}</span>
         {isAr ? <ArrowLeft class="w-4 h-4 text-slate-500" aria-hidden="true" /> : <ArrowRight class="w-4 h-4 text-slate-500" aria-hidden="true" />}
+      </a>
+      <a
+        href={blogUrl}
+        class={`mobile-link flex items-center justify-between px-4 py-2.5 rounded-lg font-bold transition-colors ${
+          isBlogActive
+            ? 'bg-accent-100 text-accent-900'
+            : 'text-primary-900 hover:bg-surface-warm'
+        }`}
+      >
+        <span>{t('nav.blog')} ({t('nav.blogGuide')})</span>
+        {isAr ? <ArrowLeft class="w-4 h-4 text-accent" aria-hidden="true" /> : <ArrowRight class="w-4 h-4 text-accent" aria-hidden="true" />}
       </a>
 
       <div class="pt-3.5 mt-2.5 border-t border-stone-200 flex flex-col gap-2.5">
@@ -270,7 +306,7 @@ const socialLinks = getSocialLinks(settings);
   const menu = document.getElementById('mobile-menu');
   const lines = toggle?.querySelectorAll('.hamburger-line');
 
-  function setMenuOpen(open) {
+  function setMenuOpen(open: boolean) {
     if (!menu || !toggle) return;
     menu.classList.toggle('hidden', !open);
     toggle.setAttribute('aria-expanded', String(open));

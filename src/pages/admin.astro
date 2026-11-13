@@ -2,7 +2,7 @@
 import '../styles/global.css';
 import defaultMedia from '../data/media.json';
 import { SOCIAL_PLATFORMS } from '../utils/settings';
-import { getMediaItems, getRuntimeEnv, getSiteSettings } from '../utils/db';
+import { getBlogPosts, getMediaItems, getRuntimeEnv, getSiteSettings } from '../utils/db';
 import {
   Plus,
   Key,
@@ -25,14 +25,16 @@ import {
   RefreshCw,
   Activity,
   Database,
+  BookOpen,
 } from '@lucide/astro';
 
 export const prerender = false;
 
 const { db } = getRuntimeEnv(Astro.locals);
-const [initialSettings, initialMediaItems] = await Promise.all([
+const [initialSettings, initialMediaItems, initialBlogPosts] = await Promise.all([
   getSiteSettings(db),
   getMediaItems(db),
+  getBlogPosts(db, { publishedOnly: false }),
 ]);
 const initialMedia = { items: initialMediaItems };
 const dbConnected = Boolean(db);
@@ -248,6 +250,19 @@ Astro.response.headers.set('Cache-Control', 'no-store');
           >
             <Images class="w-4 h-4 shrink-0" aria-hidden="true" />
             <span>إدارة المعرض</span>
+          </button>
+
+          <button
+            type="button"
+            role="tab"
+            id="tab-btn-blog"
+            data-tab="blog"
+            aria-selected="false"
+            aria-controls="tab-panel-blog"
+            class="tab-btn relative flex-1 sm:flex-initial flex items-center justify-center sm:justify-start gap-1.5 sm:gap-2 px-3 sm:px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold whitespace-nowrap transition-all duration-200 active:scale-[0.98] min-h-[44px]"
+          >
+            <BookOpen class="w-4 h-4 shrink-0" aria-hidden="true" />
+            <span>المقالات والمدونة</span>
           </button>
         </nav>
       </div>
@@ -761,10 +776,204 @@ Astro.response.headers.set('Cache-Control', 'no-store');
           <div id="media-table-container" class="space-y-3"></div>
         </section>
       </div>
+
+      <!-- ========================================================= -->
+      <!-- TAB 4: BLOG & ARTICLES MANAGEMENT                        -->
+      <!-- ========================================================= -->
+      <div
+        id="tab-panel-blog"
+        role="tabpanel"
+        aria-labelledby="tab-btn-blog"
+        data-tab-panel="blog"
+        class="hidden space-y-6 tab-panel-animate"
+      >
+        <!-- Blog Guide & Add Action -->
+        <div class="bg-slate-900/70 border border-white/10 rounded-2xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div class="flex items-start gap-3">
+            <div class="w-10 h-10 rounded-xl bg-accent-500/15 border border-accent-400/25 text-accent-300 flex items-center justify-center shrink-0 mt-0.5">
+              <BookOpen class="w-5 h-5" aria-hidden="true" />
+            </div>
+            <div>
+              <h2 class="text-sm font-bold text-white">إدارة المدونة والمقالات (SEO Engine)</h2>
+              <p class="text-xs text-slate-300 mt-1 leading-relaxed">
+                أنشئ مقالات جديدة غنية بالسيو باللغتين العربية والإنجليزية، عدّل المحتوى والأسئلة الشائعة (FAQ)، وتحكّم بحالة النشر فوراً.
+              </p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              id="new-blog-post-btn"
+              class="inline-flex items-center gap-2 bg-accent-500 hover:bg-accent-400 active:scale-[0.98] text-slate-950 text-xs font-bold px-4 py-2.5 rounded-xl shadow-md transition-all duration-200 min-h-[42px]"
+            >
+              <Plus class="w-4 h-4" />
+              <span>إضافة مقال جديد</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Live Statistics -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          <div class="bg-slate-900/70 border border-white/10 rounded-2xl p-5 hover:-translate-y-0.5 hover:shadow-elevated transition-all duration-200 relative overflow-hidden">
+            <div class="text-xs font-bold text-slate-300">إجمالي المقالات</div>
+            <div id="stat-blog-total" class="text-3xl font-extrabold text-white mt-2 tabular-nums">0</div>
+          </div>
+          <div class="bg-slate-900/70 border border-white/10 rounded-2xl p-5 hover:-translate-y-0.5 hover:shadow-elevated transition-all duration-200 relative overflow-hidden">
+            <div class="text-xs font-bold text-slate-300">مقالات منشورة</div>
+            <div id="stat-blog-published" class="text-3xl font-extrabold text-emerald-400 mt-2 tabular-nums">0</div>
+          </div>
+          <div class="bg-slate-900/70 border border-white/10 rounded-2xl p-5 hover:-translate-y-0.5 hover:shadow-elevated transition-all duration-200 relative overflow-hidden">
+            <div class="text-xs font-bold text-slate-300">مسودات غير معلنة</div>
+            <div id="stat-blog-drafts" class="text-3xl font-extrabold text-amber-400 mt-2 tabular-nums">0</div>
+          </div>
+          <div class="bg-slate-900/70 border border-white/10 rounded-2xl p-5 hover:-translate-y-0.5 hover:shadow-elevated transition-all duration-200 relative overflow-hidden">
+            <div class="text-xs font-bold text-slate-300">إجمالي المشاهدات</div>
+            <div id="stat-blog-views" class="text-3xl font-extrabold text-sky-400 mt-2 tabular-nums">0</div>
+          </div>
+        </div>
+
+        <!-- Filters & Search Toolbar -->
+        <div class="bg-slate-900/65 border border-white/10 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex flex-wrap items-center gap-2">
+            <select id="blog-filter-lang" class="bg-slate-800 text-white text-xs font-bold px-3 py-2 rounded-xl border border-white/10 outline-none focus:border-accent-400">
+              <option value="all">كل اللغات</option>
+              <option value="ar">العربية (ar)</option>
+              <option value="en">English (en)</option>
+            </select>
+            <select id="blog-filter-cat" class="bg-slate-800 text-white text-xs font-bold px-3 py-2 rounded-xl border border-white/10 outline-none focus:border-accent-400">
+              <option value="all">كل التصنيفات</option>
+              <option value="pricing">أسعار وتكاليف</option>
+              <option value="hoist">أوناش ورفع</option>
+              <option value="packing">تغليف وحماية</option>
+              <option value="areas">مناطق وتغطية</option>
+              <option value="tips">نصائح وإرشادات</option>
+            </select>
+          </div>
+          <div class="w-full sm:w-64">
+            <input
+              type="search"
+              id="blog-search-input"
+              placeholder="ابحث بالعنوان أو الرابط..."
+              class="w-full bg-slate-800 text-white placeholder-slate-400 text-xs px-3.5 py-2 rounded-xl border border-white/10 outline-none focus:border-accent-400"
+            />
+          </div>
+        </div>
+
+        <!-- Blog Posts Catalog -->
+        <div id="blog-posts-list" class="space-y-3"></div>
+      </div>
     </main>
   </div>
 
-  <script define:vars={{ defaultMedia, initialMedia, initialSettings, dbConnected }}>
+  <!-- Blog Post Modal Dialog -->
+  <dialog id="blog-post-modal" class="lightbox-dialog rounded-3xl bg-slate-900 border border-white/20 text-white p-6 sm:p-8 max-w-3xl w-full mx-auto shadow-2xl backdrop:bg-slate-950/80 my-auto">
+    <div class="flex items-center justify-between pb-4 mb-6 border-b border-white/10">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-accent-500/20 text-accent-300 flex items-center justify-center font-bold">
+          <BookOpen class="w-5 h-5" />
+        </div>
+        <h3 id="blog-modal-title" class="text-lg font-bold text-white">إضافة مقال جديد</h3>
+      </div>
+      <button type="button" id="close-blog-modal-btn" class="w-8 h-8 rounded-lg bg-white/10 hover:bg-white/20 text-slate-300 hover:text-white flex items-center justify-center text-sm font-bold transition-colors">
+        ✕
+      </button>
+    </div>
+
+    <form id="blog-post-form" class="space-y-5 max-h-[75vh] overflow-y-auto px-1">
+      <input type="hidden" id="blog-field-id" />
+
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1.5">اللغة</label>
+          <select id="blog-field-lang" class="w-full bg-slate-800 text-white text-xs px-3.5 py-2.5 rounded-xl border border-white/15 outline-none focus:border-accent-400">
+            <option value="ar">العربية (ar)</option>
+            <option value="en">English (en)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1.5">التصنيف</label>
+          <select id="blog-field-category" class="w-full bg-slate-800 text-white text-xs px-3.5 py-2.5 rounded-xl border border-white/15 outline-none focus:border-accent-400">
+            <option value="pricing">أسعار وتكاليف (pricing)</option>
+            <option value="hoist">أوناش ورفع (hoist)</option>
+            <option value="packing">تغليف وحماية (packing)</option>
+            <option value="areas">مناطق وتغطية (areas)</option>
+            <option value="tips">نصائح وإرشادات (tips)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-300 mb-1.5">وقت القراءة المقدر</label>
+          <input type="text" id="blog-field-readtime" placeholder="5 دقائق" class="w-full bg-slate-800 text-white text-xs px-3.5 py-2.5 rounded-xl border border-white/15 outline-none focus:border-accent-400" />
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-300 mb-1.5">عنوان المقال (H1 Target Keyword)</label>
+        <input type="text" id="blog-field-title" required placeholder="مثال: أسعار نقل العفش في مصر 2026..." class="w-full bg-slate-800 text-white text-xs font-bold px-3.5 py-2.5 rounded-xl border border-white/15 outline-none focus:border-accent-400" />
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-300 mb-1.5">الرابط الدائم (SEO Slug)</label>
+        <input type="text" id="blog-field-slug" required placeholder="furniture-moving-cost-egypt" class="w-full bg-slate-800 text-white font-mono text-xs px-3.5 py-2.5 rounded-xl border border-white/15 outline-none focus:border-accent-400" />
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-300 mb-1.5">رابط صورة الغلاف (Cover Image)</label>
+        <div class="flex gap-2">
+          <input type="text" id="blog-field-cover" placeholder="/media/truck-loading-cairo.webp" class="flex-1 bg-slate-800 text-white font-mono text-xs px-3.5 py-2.5 rounded-xl border border-white/15 outline-none focus:border-accent-400" />
+          <button type="button" id="blog-pick-cover-btn" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-xs font-bold rounded-xl border border-white/15">
+            اختيار من المعرض
+          </button>
+        </div>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-300 mb-1.5">المقتطف ووصف الميتا (Meta Description / Excerpt)</label>
+        <textarea id="blog-field-excerpt" rows="2" placeholder="وصف جذاب للمقال يظهر في نتائج بحث جوجل..." class="w-full bg-slate-800 text-white text-xs p-3 rounded-xl border border-white/15 outline-none focus:border-accent-400 leading-relaxed"></textarea>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-300 mb-1.5">الكلمات المفتاحية (Tags - مفصولة بفاصلة)</label>
+        <input type="text" id="blog-field-tags" placeholder="نقل عفش, ونش رفع اثاث, تغليف عفش" class="w-full bg-slate-800 text-white text-xs px-3.5 py-2.5 rounded-xl border border-white/15 outline-none focus:border-accent-400" />
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-300 mb-1.5">محتوى المقال (HTML / Rich Format)</label>
+        <p class="text-[11px] text-slate-400 mb-2">يدعم وسوم HTML مثل &lt;h2&gt;, &lt;p&gt;, &lt;ul&gt;, &lt;ol&gt;, &lt;table&gt;.</p>
+        <textarea id="blog-field-content" rows="8" required class="w-full bg-slate-800 text-white font-mono text-xs p-3.5 rounded-xl border border-white/15 outline-none focus:border-accent-400 leading-relaxed"></textarea>
+      </div>
+
+      <!-- FAQ Builder -->
+      <div class="pt-4 border-t border-white/10 space-y-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <h4 class="text-xs font-bold text-white">الأسئلة الشائعة الخاصة بالمقال (Schema FAQ Builder)</h4>
+            <p class="text-[11px] text-slate-400">تظهر في المقال وتُولد كود FAQPage لجوجل لظهور النتائج الغنية.</p>
+          </div>
+          <button type="button" id="add-faq-item-btn" class="px-3 py-1.5 bg-accent-500/20 hover:bg-accent-500/30 text-accent-300 text-xs font-bold rounded-lg border border-accent-400/30 transition-colors">
+            + إضافة سؤال
+          </button>
+        </div>
+        <div id="faq-items-container" class="space-y-3"></div>
+      </div>
+
+      <div class="pt-4 border-t border-white/10 flex items-center justify-between">
+        <label class="inline-flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-200">
+          <input type="checkbox" id="blog-field-published" checked class="w-4 h-4 rounded-md accent-accent-500" />
+          <span>نشر المقال فوراً (علني للزوار ومحركات البحث)</span>
+        </label>
+        <div class="flex items-center gap-2">
+          <button type="button" id="cancel-blog-btn" class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-300 transition-colors">
+            إلغاء
+          </button>
+          <button type="submit" id="save-blog-btn" class="px-5 py-2.5 rounded-xl bg-accent-500 hover:bg-accent-400 text-slate-950 text-xs font-extrabold shadow-md transition-all">
+            حفظ المقال
+          </button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <script define:vars={{ defaultMedia, initialMedia, initialSettings, initialBlogPosts, dbConnected }}>
     const authGate = document.getElementById('auth-gate');
     const dashboard = document.getElementById('dashboard');
     const authForm = document.getElementById('auth-form');
@@ -809,7 +1018,7 @@ Astro.response.headers.set('Cache-Control', 'no-store');
     }
 
     // Tab Navigation System
-    const VALID_TABS = ['traffic', 'settings', 'media'];
+    const VALID_TABS = ['traffic', 'settings', 'media', 'blog'];
     const tabButtons = Array.from(document.querySelectorAll('.tab-btn'));
     const tabPanels = Array.from(document.querySelectorAll('[data-tab-panel]'));
 
@@ -848,6 +1057,9 @@ Astro.response.headers.set('Cache-Control', 'no-store');
 
       if (target === 'traffic' && getAdminKey() && !trafficLoadedOnce) {
         loadTrafficData(currentTrafficRange);
+      }
+      if (target === 'blog') {
+        renderBlogPosts();
       }
     }
 
@@ -1614,6 +1826,401 @@ Astro.response.headers.set('Cache-Control', 'no-store');
       URL.revokeObjectURL(url);
     });
 
+    // =========================================================
+    // BLOG MANAGEMENT ENGINE
+    // =========================================================
+    let blogData = Array.isArray(initialBlogPosts) ? JSON.parse(JSON.stringify(initialBlogPosts)) : [];
+    const blogListContainer = document.getElementById('blog-posts-list');
+    const blogModal = document.getElementById('blog-post-modal');
+    const blogForm = document.getElementById('blog-post-form');
+    const blogFilterLang = document.getElementById('blog-filter-lang');
+    const blogFilterCat = document.getElementById('blog-filter-cat');
+    const blogSearchInput = document.getElementById('blog-search-input');
+    const faqContainer = document.getElementById('faq-items-container');
+
+    const statBlogTotal = document.getElementById('stat-blog-total');
+    const statBlogPublished = document.getElementById('stat-blog-published');
+    const statBlogDrafts = document.getElementById('stat-blog-drafts');
+    const statBlogViews = document.getElementById('stat-blog-views');
+
+    function updateBlogStats() {
+      if (statBlogTotal) statBlogTotal.textContent = String(blogData.length);
+      const pubCount = blogData.filter((p) => p.published).length;
+      if (statBlogPublished) statBlogPublished.textContent = String(pubCount);
+      if (statBlogDrafts) statBlogDrafts.textContent = String(blogData.length - pubCount);
+      const totalViews = blogData.reduce((sum, p) => sum + (p.views || 0), 0);
+      if (statBlogViews) statBlogViews.textContent = totalViews.toLocaleString('ar-EG');
+    }
+
+    function renderBlogPosts() {
+      if (!blogListContainer) return;
+      updateBlogStats();
+
+      const langFilter = blogFilterLang?.value || 'all';
+      const catFilter = blogFilterCat?.value || 'all';
+      const searchQuery = (blogSearchInput?.value || '').toLowerCase().trim();
+
+      let filtered = blogData.filter((post) => {
+        if (langFilter !== 'all' && post.lang !== langFilter) return false;
+        if (catFilter !== 'all' && post.category !== catFilter) return false;
+        if (searchQuery) {
+          const matchTitle = (post.title || '').toLowerCase().includes(searchQuery);
+          const matchSlug = (post.slug || '').toLowerCase().includes(searchQuery);
+          if (!matchTitle && !matchSlug) return false;
+        }
+        return true;
+      });
+
+      if (filtered.length === 0) {
+        blogListContainer.innerHTML = `
+          <div class="bg-slate-900/60 border border-white/10 rounded-2xl p-8 text-center text-slate-400 text-sm">
+            لا توجد مقالات مطابقة لمعايير البحث والفلترة.
+          </div>
+        `;
+        return;
+      }
+
+      blogListContainer.innerHTML = filtered
+        .map((post) => {
+          const isAr = post.lang === 'ar';
+          const postLink = isAr ? `/blog/${post.slug}` : `/en/blog/${post.slug}`;
+          const isPublished = post.published !== false;
+
+          return `
+            <div class="bg-slate-900/75 border border-white/10 rounded-2xl p-4 sm:p-5 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 hover:border-white/20 transition-all duration-200">
+              <div class="flex items-start sm:items-center gap-3.5 min-w-0 flex-1">
+                <img
+                  src="${post.coverImage || '/media/truck-loading-cairo.webp'}"
+                  alt="${post.title}"
+                  class="w-16 h-12 sm:w-20 sm:h-14 rounded-xl object-cover bg-slate-800 shrink-0 border border-white/10"
+                />
+                <div class="min-w-0 flex-1">
+                  <div class="flex flex-wrap items-center gap-2 mb-1">
+                    <span class="text-[11px] font-bold px-2 py-0.5 rounded-md ${isAr ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-sky-500/20 text-sky-300 border border-sky-500/30'}">
+                      ${isAr ? 'عربي' : 'English'}
+                    </span>
+                    <span class="text-[11px] font-semibold text-slate-400 bg-white/5 px-2 py-0.5 rounded-md">
+                      ${post.category}
+                    </span>
+                    <span class="text-[11px] font-semibold px-2 py-0.5 rounded-md ${isPublished ? 'bg-emerald-500/15 text-emerald-400' : 'bg-amber-500/15 text-amber-400'}">
+                      ${isPublished ? 'منشور علناً' : 'مسودة غير منشورة'}
+                    </span>
+                    <span class="text-[11px] text-slate-400">
+                      • ${post.readTime || '5 دقائق'}
+                    </span>
+                    <span class="text-[11px] text-slate-400">
+                      • ${(post.views || 0).toLocaleString()} قراءة
+                    </span>
+                  </div>
+                  <h3 class="text-sm font-bold text-white truncate max-w-xl">
+                    ${post.title}
+                  </h3>
+                  <div class="text-[11px] text-slate-400 font-mono mt-0.5 truncate max-w-md" dir="ltr">
+                    ${postLink}
+                  </div>
+                </div>
+              </div>
+
+              <div class="flex items-center gap-2 self-end md:self-center shrink-0">
+                <a
+                  href="${postLink}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  class="p-2 sm:px-3 sm:py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white text-xs font-bold border border-white/10 transition-colors inline-flex items-center gap-1.5"
+                  title="معاينة المقال"
+                >
+                  <span>عرض</span>
+                </a>
+
+                <button
+                  type="button"
+                  data-blog-toggle-id="${post.id}"
+                  class="p-2 sm:px-3 sm:py-2 rounded-xl ${isPublished ? 'bg-amber-500/20 text-amber-300 hover:bg-amber-500/30' : 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'} text-xs font-bold transition-colors"
+                >
+                  ${isPublished ? 'إلغاء النشر' : 'نشر'}
+                </button>
+
+                <button
+                  type="button"
+                  data-blog-edit-id="${post.id}"
+                  class="p-2 sm:px-3 sm:py-2 rounded-xl bg-accent-500/20 hover:bg-accent-500/30 text-accent-300 text-xs font-bold border border-accent-400/25 transition-colors"
+                >
+                  تعديل
+                </button>
+
+                <button
+                  type="button"
+                  data-blog-delete-id="${post.id}"
+                  class="p-2 sm:px-2.5 sm:py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 text-xs font-bold border border-rose-500/25 transition-colors"
+                  title="حذف المقال"
+                >
+                  حذف
+                </button>
+              </div>
+            </div>
+          `;
+        })
+        .join('');
+
+      // Attach row actions
+      blogListContainer.querySelectorAll('[data-blog-edit-id]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-blog-edit-id');
+          const post = blogData.find((p) => p.id === id);
+          if (post) openBlogModal(post);
+        });
+      });
+
+      blogListContainer.querySelectorAll('[data-blog-delete-id]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const id = btn.getAttribute('data-blog-delete-id');
+          const post = blogData.find((p) => p.id === id);
+          if (!post) return;
+          if (confirm(`هل أنت متأكد من حذف مقال "${post.title}"؟`)) {
+            await deletePost(id);
+          }
+        });
+      });
+
+      blogListContainer.querySelectorAll('[data-blog-toggle-id]').forEach((btn) => {
+        btn.addEventListener('click', async () => {
+          const id = btn.getAttribute('data-blog-toggle-id');
+          const post = blogData.find((p) => p.id === id);
+          if (!post) return;
+          post.published = !post.published;
+          await savePostData(post, `تم ${post.published ? 'نشر' : 'تعطيل نشر'} المقال بنجاح.`);
+        });
+      });
+    }
+
+    function renderFaqItems(faqs = []) {
+      if (!faqContainer) return;
+      faqContainer.innerHTML = '';
+      faqs.forEach((faq, index) => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'p-3 bg-slate-800/80 rounded-xl border border-white/10 space-y-2 relative';
+        itemDiv.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="text-[11px] font-bold text-accent-300">سؤال شائع #${index + 1}</span>
+            <button type="button" data-faq-remove="${index}" class="text-rose-400 hover:text-rose-300 text-xs font-bold">حذف</button>
+          </div>
+          <input type="text" data-faq-q="${index}" value="${faq.question || ''}" placeholder="نص السؤال..." class="w-full bg-slate-900 text-white text-xs px-3 py-1.5 rounded-lg border border-white/10 outline-none" />
+          <textarea data-faq-a="${index}" rows="2" placeholder="نص الإجابة التفصيلية..." class="w-full bg-slate-900 text-white text-xs p-2 rounded-lg border border-white/10 outline-none leading-relaxed">${faq.answer || ''}</textarea>
+        `;
+        faqContainer.appendChild(itemDiv);
+      });
+
+      faqContainer.querySelectorAll('[data-faq-remove]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          const idx = Number(btn.getAttribute('data-faq-remove'));
+          currentModalFaqs.splice(idx, 1);
+          renderFaqItems(currentModalFaqs);
+        });
+      });
+    }
+
+    let currentModalFaqs = [];
+
+    document.getElementById('add-faq-item-btn')?.addEventListener('click', () => {
+      // Sync current DOM inputs back into array first
+      syncFaqFromDom();
+      currentModalFaqs.push({ question: '', answer: '' });
+      renderFaqItems(currentModalFaqs);
+    });
+
+    function syncFaqFromDom() {
+      if (!faqContainer) return;
+      const count = currentModalFaqs.length;
+      for (let i = 0; i < count; i++) {
+        const qInput = faqContainer.querySelector(`[data-faq-q="${i}"]`);
+        const aInput = faqContainer.querySelector(`[data-faq-a="${i}"]`);
+        if (qInput && aInput) {
+          currentModalFaqs[i] = {
+            question: qInput.value.trim(),
+            answer: aInput.value.trim(),
+          };
+        }
+      }
+    }
+
+    function openBlogModal(post = null) {
+      if (!blogModal || !blogForm) return;
+      const modalTitle = document.getElementById('blog-modal-title');
+      const idInput = document.getElementById('blog-field-id');
+      const langInput = document.getElementById('blog-field-lang');
+      const categoryInput = document.getElementById('blog-field-category');
+      const readTimeInput = document.getElementById('blog-field-readtime');
+      const titleInput = document.getElementById('blog-field-title');
+      const slugInput = document.getElementById('blog-field-slug');
+      const coverInput = document.getElementById('blog-field-cover');
+      const excerptInput = document.getElementById('blog-field-excerpt');
+      const tagsInput = document.getElementById('blog-field-tags');
+      const contentInput = document.getElementById('blog-field-content');
+      const publishedInput = document.getElementById('blog-field-published');
+
+      if (post) {
+        if (modalTitle) modalTitle.textContent = 'تعديل المقال';
+        if (idInput) idInput.value = post.id || '';
+        if (langInput) langInput.value = post.lang || 'ar';
+        if (categoryInput) categoryInput.value = post.category || 'tips';
+        if (readTimeInput) readTimeInput.value = post.readTime || '5 دقائق';
+        if (titleInput) titleInput.value = post.title || '';
+        if (slugInput) slugInput.value = post.slug || '';
+        if (coverInput) coverInput.value = post.coverImage || '';
+        if (excerptInput) excerptInput.value = post.excerpt || '';
+        if (tagsInput) tagsInput.value = Array.isArray(post.tags) ? post.tags.join(', ') : (post.tags || '');
+        if (contentInput) contentInput.value = post.content || '';
+        if (publishedInput) publishedInput.checked = post.published !== false;
+        currentModalFaqs = Array.isArray(post.faq) ? JSON.parse(JSON.stringify(post.faq)) : [];
+      } else {
+        if (modalTitle) modalTitle.textContent = 'إضافة مقال جديد';
+        blogForm.reset();
+        if (idInput) idInput.value = '';
+        if (langInput) langInput.value = 'ar';
+        if (categoryInput) categoryInput.value = 'pricing';
+        if (readTimeInput) readTimeInput.value = '5 دقائق';
+        if (coverInput) coverInput.value = '/media/truck-loading-cairo.webp';
+        if (publishedInput) publishedInput.checked = true;
+        currentModalFaqs = [
+          { question: '', answer: '' }
+        ];
+      }
+
+      renderFaqItems(currentModalFaqs);
+      blogModal.showModal();
+    }
+
+    function closeBlogModal() {
+      if (blogModal) blogModal.close();
+    }
+
+    document.getElementById('new-blog-post-btn')?.addEventListener('click', () => openBlogModal(null));
+    document.getElementById('close-blog-modal-btn')?.addEventListener('click', closeBlogModal);
+    document.getElementById('cancel-blog-btn')?.addEventListener('click', closeBlogModal);
+
+    // Auto-generate slug from title
+    document.getElementById('blog-field-title')?.addEventListener('input', (e) => {
+      const slugInput = document.getElementById('blog-field-slug');
+      const idInput = document.getElementById('blog-field-id');
+      if (slugInput && !idInput?.value) {
+        const val = e.target.value.trim().toLowerCase()
+          .replace(/[\s_]+/g, '-')
+          .replace(/[^a-z0-9\u0600-\u06FF-]/g, '')
+          .slice(0, 80);
+        slugInput.value = val;
+      }
+    });
+
+    // Form submission
+    blogForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      syncFaqFromDom();
+
+      const id = document.getElementById('blog-field-id')?.value || undefined;
+      const lang = document.getElementById('blog-field-lang')?.value || 'ar';
+      const category = document.getElementById('blog-field-category')?.value || 'tips';
+      const readTime = document.getElementById('blog-field-readtime')?.value || '5 دقائق';
+      const title = document.getElementById('blog-field-title')?.value.trim();
+      const slug = document.getElementById('blog-field-slug')?.value.trim();
+      const coverImage = document.getElementById('blog-field-cover')?.value.trim() || '/media/truck-loading-cairo.webp';
+      const excerpt = document.getElementById('blog-field-excerpt')?.value.trim() || '';
+      const tags = document.getElementById('blog-field-tags')?.value.split(',').map((t) => t.trim()).filter(Boolean) || [];
+      const content = document.getElementById('blog-field-content')?.value || '';
+      const published = document.getElementById('blog-field-published')?.checked !== false;
+
+      if (!title || !slug) {
+        showToast('يرجى كتابة عنوان المقال والرابط الدائم (Slug).', true);
+        return;
+      }
+
+      const validFaqs = currentModalFaqs.filter((f) => f.question && f.answer);
+
+      const payload = {
+        id,
+        lang,
+        category,
+        readTime,
+        title,
+        slug,
+        coverImage,
+        excerpt,
+        tags,
+        content,
+        published,
+        faq: validFaqs,
+      };
+
+      await savePostData(payload, id ? 'تم تحديث المقال بنجاح.' : 'تم إنشاء ونشر المقال الجديد بنجاح.');
+      closeBlogModal();
+    });
+
+    async function savePostData(postPayload, successMsg) {
+      const key = getAdminKey();
+      if (!key) {
+        showToast('يرجى تسجيل الدخول أولاً.', true);
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/blog', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-admin-key': key,
+          },
+          body: JSON.stringify(postPayload),
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data.ok) {
+          throw new Error(data.error || 'فشل حفظ المقال.');
+        }
+
+        const saved = data.post;
+        const existingIdx = blogData.findIndex((p) => p.id === saved.id || p.slug === saved.slug);
+        if (existingIdx >= 0) {
+          blogData[existingIdx] = saved;
+        } else {
+          blogData.unshift(saved);
+        }
+
+        renderBlogPosts();
+        showToast(successMsg);
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : 'حدث خطأ أثناء حفظ المقال.', true);
+      }
+    }
+
+    async function deletePost(id) {
+      const key = getAdminKey();
+      if (!key) return;
+
+      try {
+        const res = await fetch(`/api/blog?id=${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+          headers: {
+            'x-admin-key': key,
+          },
+        });
+
+        const data = await res.json();
+        if (!res.ok || !data.ok) {
+          throw new Error(data.error || 'فشل حذف المقال.');
+        }
+
+        blogData = blogData.filter((p) => p.id !== id);
+        renderBlogPosts();
+        showToast('تم حذف المقال بنجاح.');
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : 'تعذر حذف المقال.', true);
+      }
+    }
+
+    // Filter event listeners
+    blogFilterLang?.addEventListener('change', renderBlogPosts);
+    blogFilterCat?.addEventListener('change', renderBlogPosts);
+    blogSearchInput?.addEventListener('input', renderBlogPosts);
+
     document.getElementById('reset-default-btn')?.addEventListener('click', () => {
       if (confirm('هل تريد استعادة البيانات الافتراضية وحفظها في قاعدة البيانات؟')) {
         mediaData = JSON.parse(JSON.stringify(defaultMedia));
@@ -1622,6 +2229,7 @@ Astro.response.headers.set('Cache-Control', 'no-store');
     });
 
     renderList();
+    renderBlogPosts();
   </script>
 </body>
 </html>

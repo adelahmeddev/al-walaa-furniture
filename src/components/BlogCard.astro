@@ -1,0 +1,117 @@
+---
+import type { BlogPost } from '../data/blog-posts';
+import { Clock, Calendar, ArrowLeft, ArrowRight } from '@lucide/astro';
+
+interface Props {
+  post: BlogPost;
+  lang: 'ar' | 'en';
+  featured?: boolean;
+}
+
+const { post, lang, featured = false } = Astro.props;
+const isAr = lang === 'ar';
+const postUrl = isAr ? `/blog/${post.slug}` : `/en/blog/${post.slug}`;
+
+const categoryLabels: Record<string, { ar: string; en: string; color: string }> = {
+  pricing: { ar: 'أسعار وتكاليف', en: 'Pricing & Costs', color: 'bg-emerald-50 text-emerald-800 border-emerald-200' },
+  hoist: { ar: 'أوناش ورفع', en: 'Hydraulic Hoists', color: 'bg-blue-50 text-blue-800 border-blue-200' },
+  packing: { ar: 'تغليف وحماية', en: 'Packing & Protection', color: 'bg-amber-50 text-amber-800 border-amber-200' },
+  areas: { ar: 'مناطق وتغطية', en: 'Areas & Locations', color: 'bg-purple-50 text-purple-800 border-purple-200' },
+  tips: { ar: 'نصائح وإرشادات', en: 'Tips & Checklists', color: 'bg-stone-100 text-stone-800 border-stone-200' },
+};
+
+const categoryInfo = categoryLabels[post.category] || categoryLabels.tips;
+const categoryText = isAr ? categoryInfo.ar : categoryInfo.en;
+
+const formattedDate = new Date(post.createdAt).toLocaleDateString(isAr ? 'ar-EG' : 'en-US', {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+});
+---
+
+<article
+  class={`group bg-white rounded-2xl border border-stone-200 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col overflow-hidden hover:-translate-y-1 ${
+    featured ? 'md:grid md:grid-cols-12 md:gap-6 md:items-center' : ''
+  }`}
+>
+  <!-- Card Image Container -->
+  <a
+    href={postUrl}
+    class={`relative block overflow-hidden bg-slate-100 aspect-16/10 ${
+      featured ? 'md:col-span-6 md:h-full md:aspect-auto' : ''
+    }`}
+  >
+    <img
+      src={post.coverImage}
+      alt={post.title}
+      loading="lazy"
+      decoding="async"
+      width="640"
+      height="400"
+      class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+    />
+    <div class="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+    
+    <span
+      class={`absolute top-3.5 ltr:left-3.5 rtl:right-3.5 text-xs font-bold px-3 py-1 rounded-full border shadow-xs ${categoryInfo.color} backdrop-blur-xs`}
+    >
+      {categoryText}
+    </span>
+  </a>
+
+  <!-- Card Body -->
+  <div class={`p-5 sm:p-6 flex flex-col flex-1 justify-between ${featured ? 'md:col-span-6 md:p-8' : ''}`}>
+    <div>
+      <!-- Meta Details -->
+      <div class="flex items-center gap-3 text-xs text-slate-500 mb-3">
+        <span class="inline-flex items-center gap-1">
+          <Calendar class="w-3.5 h-3.5 text-accent" aria-hidden="true" />
+          <time datetime={post.createdAt}>{formattedDate}</time>
+        </span>
+        <span class="text-stone-300" aria-hidden="true">•</span>
+        <span class="inline-flex items-center gap-1 font-medium">
+          <Clock class="w-3.5 h-3.5 text-accent" aria-hidden="true" />
+          <span>{post.readTime}</span>
+        </span>
+      </div>
+
+      <!-- Title -->
+      <h3
+        class={`font-extrabold text-slate-900 group-hover:text-primary transition-colors leading-snug ${
+          featured ? 'text-xl sm:text-2xl lg:text-3xl mb-3' : 'text-lg sm:text-xl mb-2.5 line-clamp-2'
+        }`}
+      >
+        <a href={postUrl} class="hover:underline focus:outline-hidden">
+          {post.title}
+        </a>
+      </h3>
+
+      <!-- Excerpt -->
+      <p class={`text-slate-600 text-sm leading-relaxed ${featured ? 'line-clamp-3 mb-6' : 'line-clamp-3 mb-4'}`}>
+        {post.excerpt}
+      </p>
+    </div>
+
+    <!-- Card Footer & CTA Link -->
+    <div class="pt-4 border-t border-stone-100 flex items-center justify-between">
+      <a
+        href={postUrl}
+        class="inline-flex items-center gap-1.5 text-sm font-bold text-accent-700 hover:text-accent-800 transition-colors group/link"
+      >
+        <span>{isAr ? 'اقرأ الدليل كاملاً' : 'Read Full Guide'}</span>
+        {isAr ? (
+          <ArrowLeft class="w-4 h-4 transition-transform group-hover/link:-translate-x-1" aria-hidden="true" />
+        ) : (
+          <ArrowRight class="w-4 h-4 transition-transform group-hover/link:translate-x-1" aria-hidden="true" />
+        )}
+      </a>
+
+      {post.views > 0 && (
+        <span class="text-[11px] text-slate-500 font-medium">
+          {post.views.toLocaleString(isAr ? 'ar-EG' : 'en-US')} {isAr ? 'مشاهدة' : 'views'}
+        </span>
+      )}
+    </div>
+  </div>
+</article>
