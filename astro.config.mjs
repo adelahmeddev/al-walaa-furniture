@@ -4,7 +4,7 @@ import sitemap from '@astrojs/sitemap';
 import cloudflare from '@astrojs/cloudflare';
 
 // Set SITE_URL in Cloudflare Pages environment variables when connecting your custom domain
-const siteUrl = (process.env.SITE_URL || 'https://alwalaa-moving.com').replace(/\/$/, '');
+const siteUrl = (process.env.SITE_URL || 'https://alwalaamoving.com').replace(/\/$/, '');
 
 // https://astro.build/config
 export default defineConfig({
