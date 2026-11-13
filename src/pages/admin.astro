@@ -22,6 +22,7 @@ import {
   RefreshCw,
   Activity,
   BookOpen,
+  Video,
 } from '@lucide/astro';
 
 export const prerender = false;
@@ -674,7 +675,8 @@ Astro.response.headers.set('Cache-Control', 'no-store');
                 <label for="item-type" class="block text-xs font-bold text-slate-200 mb-1.5">نوع الوسيط *</label>
                 <select id="item-type" class="w-full bg-slate-950/80 border border-white/15 rounded-xl px-3.5 py-3 text-sm font-medium text-white transition-all duration-200 focus:border-accent-300 focus:ring-2 focus:ring-accent-300/30 outline-none">
                   <option value="image">صورة (رفع من الجهاز)</option>
-                  <option value="video">فيديو (YouTube)</option>
+                  <option value="video-upload">فيديو (رفع من الجهاز - MP4 / WebM)</option>
+                  <option value="video-youtube">فيديو من يوتيوب (رابط YouTube)</option>
                 </select>
               </div>
 
@@ -688,6 +690,7 @@ Astro.response.headers.set('Cache-Control', 'no-store');
                 </select>
               </div>
 
+              <!-- Image File Upload -->
               <div id="photo-upload-wrap">
                 <label for="item-file" class="block text-xs font-bold text-slate-200 mb-1.5">رفع الصورة من جهازك *</label>
                 <label
@@ -700,6 +703,23 @@ Astro.response.headers.set('Cache-Control', 'no-store');
                 <input type="file" id="item-file" accept="image/*" class="sr-only" />
               </div>
 
+              <!-- Device Video File Upload -->
+              <div id="video-upload-wrap" class="hidden">
+                <label for="item-video-file" class="block text-xs font-bold text-slate-200 mb-1.5 flex items-center justify-between">
+                  <span>رفع الفيديو من جهازك *</span>
+                  <span class="text-[11px] text-accent-300 font-normal">MP4 / WebM (حتى 35MB)</span>
+                </label>
+                <label
+                  for="item-video-file"
+                  class="flex items-center justify-between gap-3 bg-slate-950/80 hover:bg-slate-800/80 border border-dashed border-rose-500/50 rounded-xl px-3.5 py-2.5 cursor-pointer transition-all duration-200 min-h-[46px]"
+                >
+                  <span id="item-video-label" class="text-xs font-semibold text-slate-200 truncate">اختر ملف فيديو من الهاتف أو الكمبيوتر...</span>
+                  <span class="text-xs font-bold bg-rose-600 text-white px-2.5 py-1 rounded-lg shrink-0">اختيار فيديو</span>
+                </label>
+                <input type="file" id="item-video-file" accept="video/mp4,video/webm,video/quicktime,video/*" class="sr-only" />
+              </div>
+
+              <!-- YouTube Link Input -->
               <div id="video-url-wrap" class="hidden">
                 <label for="item-src" class="block text-xs font-bold text-slate-200 mb-1.5">رابط فيديو يوتيوب *</label>
                 <input
@@ -712,11 +732,21 @@ Astro.response.headers.set('Cache-Control', 'no-store');
               </div>
             </div>
 
+            <!-- Image Preview Box -->
             <div id="item-preview-wrap" class="hidden flex items-center gap-4 bg-slate-950/70 border border-white/10 rounded-xl p-3">
               <img id="item-preview-img" src="" alt="معاينة الصورة" class="w-24 h-16 object-cover rounded-lg border border-white/15 shrink-0" />
               <div class="min-w-0 text-xs">
                 <div id="item-preview-meta" class="font-bold text-emerald-300">جاهزة للرفع</div>
                 <div class="text-slate-400 mt-0.5">يتم ضغط الصورة تلقائياً بصيغة WebP لتسريع الموقع</div>
+              </div>
+            </div>
+
+            <!-- Video Preview Box -->
+            <div id="video-preview-wrap" class="hidden flex flex-col sm:flex-row items-center gap-4 bg-slate-950/70 border border-rose-500/25 rounded-xl p-3">
+              <video id="video-preview-player" controls playsinline class="w-48 h-28 object-contain bg-black rounded-lg border border-white/15 shrink-0"></video>
+              <div class="min-w-0 text-xs">
+                <div id="video-preview-meta" class="font-bold text-emerald-300">جاهز للرفع</div>
+                <div class="text-slate-400 mt-1 leading-relaxed">تم استخراج صورة الغلاف تلقائياً من الفيديو لحفظها في المعرض.</div>
               </div>
             </div>
 
@@ -1703,11 +1733,14 @@ Astro.response.headers.set('Cache-Control', 'no-store');
       return blob;
     }
 
-    async function uploadImageFile(file) {
-      const compressed = await compressToWebP(file);
-      const ext = compressed.type === 'image/webp' ? 'webp' : 'jpg';
+    async function uploadMediaFile(file, isVideo = false) {
+      let fileToUpload = file;
+      if (!isVideo && file.type && file.type.startsWith('image/')) {
+        fileToUpload = await compressToWebP(file);
+      }
+      const ext = isVideo ? (file.name.split('.').pop() || 'mp4') : (fileToUpload.type === 'image/webp' ? 'webp' : 'jpg');
       const formData = new FormData();
-      formData.append('file', compressed, `photo.${ext}`);
+      formData.append('file', fileToUpload, file.name || `media.${ext}`);
 
       const res = await fetch('/api/upload', {
         method: 'POST',
@@ -1716,31 +1749,102 @@ Astro.response.headers.set('Cache-Control', 'no-store');
       });
       const data = await res.json();
       if (!res.ok) {
-        throw new Error(data.error || 'فشل رفع الصورة');
+        throw new Error(data.error || (isVideo ? 'فشل رفع ملف الفيديو' : 'فشل رفع الصورة'));
       }
       return data.url;
     }
 
-    // Toggle Upload vs Video URL controls
+    const uploadImageFile = (file) => uploadMediaFile(file, false);
+
+    function captureVideoThumbnail(videoFile) {
+      return new Promise((resolve) => {
+        const video = document.createElement('video');
+        video.preload = 'metadata';
+        const objUrl = URL.createObjectURL(videoFile);
+        video.src = objUrl;
+        video.muted = true;
+        video.playsInline = true;
+
+        const cleanup = () => {
+          URL.revokeObjectURL(objUrl);
+        };
+
+        const timeoutId = setTimeout(() => {
+          cleanup();
+          resolve(null);
+        }, 6000);
+
+        video.onloadeddata = () => {
+          video.currentTime = Math.min(0.5, (video.duration || 1) / 2);
+        };
+
+        video.onseeked = () => {
+          clearTimeout(timeoutId);
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = Math.min(video.videoWidth || 800, 1280);
+            canvas.height = Math.min(video.videoHeight || 500, 720);
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+              canvas.toBlob((blob) => {
+                cleanup();
+                if (blob) {
+                  const thumbFile = new File([blob], 'thumb.webp', { type: 'image/webp' });
+                  resolve(thumbFile);
+                } else {
+                  resolve(null);
+                }
+              }, 'image/webp', 0.85);
+              return;
+            }
+          } catch (err) {
+            console.warn('Could not extract thumbnail canvas:', err);
+          }
+          cleanup();
+          resolve(null);
+        };
+
+        video.onerror = () => {
+          clearTimeout(timeoutId);
+          cleanup();
+          resolve(null);
+        };
+      });
+    }
+
+    // Toggle Upload vs Video controls
     const typeSelect = document.getElementById('item-type');
     const photoUploadWrap = document.getElementById('photo-upload-wrap');
+    const videoUploadWrap = document.getElementById('video-upload-wrap');
     const videoUrlWrap = document.getElementById('video-url-wrap');
     const videoThumbWrap = document.getElementById('video-thumb-wrap');
     const itemFileInput = document.getElementById('item-file');
     const itemFileLabel = document.getElementById('item-file-label');
+    const itemVideoInput = document.getElementById('item-video-file');
+    const itemVideoLabel = document.getElementById('item-video-label');
     const itemPreviewWrap = document.getElementById('item-preview-wrap');
     const itemPreviewImg = document.getElementById('item-preview-img');
     const itemPreviewMeta = document.getElementById('item-preview-meta');
+    const videoPreviewWrap = document.getElementById('video-preview-wrap');
+    const videoPreviewPlayer = document.getElementById('video-preview-player');
+    const videoPreviewMeta = document.getElementById('video-preview-meta');
     const itemSrcInput = document.getElementById('item-src');
+
     let previewObjectUrl = '';
+    let videoPreviewObjectUrl = '';
+    let extractedVideoThumb = null;
 
     function syncMediaTypeFields() {
-      const isVideo = typeSelect?.value === 'video';
-      photoUploadWrap?.classList.toggle('hidden', isVideo);
-      videoUrlWrap?.classList.toggle('hidden', !isVideo);
-      videoThumbWrap?.classList.toggle('hidden', !isVideo);
-      if (itemSrcInput) itemSrcInput.required = isVideo;
-      if (isVideo) itemPreviewWrap?.classList.add('hidden');
+      const mode = typeSelect?.value || 'image';
+      photoUploadWrap?.classList.toggle('hidden', mode !== 'image');
+      videoUploadWrap?.classList.toggle('hidden', mode !== 'video-upload');
+      videoUrlWrap?.classList.toggle('hidden', mode !== 'video-youtube');
+      videoThumbWrap?.classList.toggle('hidden', mode === 'image');
+
+      if (itemSrcInput) itemSrcInput.required = mode === 'video-youtube';
+      if (mode !== 'image') itemPreviewWrap?.classList.add('hidden');
+      if (mode !== 'video-upload') videoPreviewWrap?.classList.add('hidden');
     }
     typeSelect?.addEventListener('change', syncMediaTypeFields);
     syncMediaTypeFields();
@@ -1756,6 +1860,38 @@ Astro.response.headers.set('Cache-Control', 'no-store');
         itemPreviewMeta.textContent = `${file.name} (${Math.round(file.size / 1024)} KB قبل الضغط)`;
       }
       itemPreviewWrap?.classList.remove('hidden');
+    });
+
+    itemVideoInput?.addEventListener('change', async () => {
+      const file = itemVideoInput.files?.[0];
+      if (!file) return;
+
+      const maxMB = 35;
+      if (file.size > maxMB * 1024 * 1024) {
+        showToast(`حجم الفيديو (${(file.size / (1024 * 1024)).toFixed(1)} ميجابايت) يتجاوز الحد الأقصى (${maxMB} ميجابايت).`, true);
+        itemVideoInput.value = '';
+        if (itemVideoLabel) itemVideoLabel.textContent = 'اختر ملف فيديو (MP4, WebM)...';
+        videoPreviewWrap?.classList.add('hidden');
+        return;
+      }
+
+      if (videoPreviewObjectUrl) URL.revokeObjectURL(videoPreviewObjectUrl);
+      videoPreviewObjectUrl = URL.createObjectURL(file);
+      if (itemVideoLabel) itemVideoLabel.textContent = file.name;
+      if (videoPreviewPlayer) {
+        videoPreviewPlayer.src = videoPreviewObjectUrl;
+        videoPreviewPlayer.load();
+      }
+      if (videoPreviewMeta) {
+        videoPreviewMeta.textContent = `${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`;
+      }
+      videoPreviewWrap?.classList.remove('hidden');
+
+      showToast('جاري استخراج صورة مصغرة تلقائياً من الفيديو...');
+      extractedVideoThumb = await captureVideoThumbnail(file);
+      if (extractedVideoThumb) {
+        showToast('تم استخراج صورة مصغرة للفيديو تلقائياً ✓');
+      }
     });
 
     // Replace photo directly on an existing gallery item
@@ -1796,7 +1932,7 @@ Astro.response.headers.set('Cache-Control', 'no-store');
     const addSubmitBtn = document.getElementById('add-media-submit');
     addForm?.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const type = typeSelect.value;
+      const rawType = typeSelect.value;
       const category = document.getElementById('item-category').value;
       const title = document.getElementById('item-title').value.trim();
       const titleEn = document.getElementById('item-title-en').value.trim();
@@ -1804,10 +1940,12 @@ Astro.response.headers.set('Cache-Control', 'no-store');
 
       let src = '';
       let thumb = '';
+      let finalType = 'image';
 
       if (addSubmitBtn) addSubmitBtn.disabled = true;
       try {
-        if (type === 'image') {
+        if (rawType === 'image') {
+          finalType = 'image';
           const file = itemFileInput?.files?.[0];
           if (!file) {
             showToast('يرجى اختيار صورة من جهازك أولاً.', true);
@@ -1816,8 +1954,33 @@ Astro.response.headers.set('Cache-Control', 'no-store');
           showToast('جاري ضغط ورفع الصورة...');
           src = await uploadImageFile(file);
           thumb = src;
+        } else if (rawType === 'video-upload') {
+          finalType = 'video';
+          const videoFile = itemVideoInput?.files?.[0];
+          if (!videoFile) {
+            showToast('يرجى اختيار ملف فيديو من جهازك أولاً.', true);
+            return;
+          }
+          showToast('جاري رفع ملف الفيديو... قد يستغرق لحظات حسب الحجم.');
+          src = await uploadMediaFile(videoFile, true);
+
+          const customThumbFile = document.getElementById('item-thumb-file')?.files?.[0];
+          if (customThumbFile) {
+            showToast('جاري رفع غلاف الفيديو...');
+            thumb = await uploadImageFile(customThumbFile);
+          } else if (extractedVideoThumb) {
+            showToast('جاري رفع الصورة المصغرة المستخرجة...');
+            thumb = await uploadImageFile(extractedVideoThumb);
+          } else {
+            thumb = '/media/truck-loading-cairo.jpg';
+          }
         } else {
+          finalType = 'video';
           src = itemSrcInput.value.trim();
+          if (!src) {
+            showToast('يرجى إدخال رابط يوتيوب.', true);
+            return;
+          }
           if (src.includes('watch?v=')) {
             src = src.replace('watch?v=', 'embed/');
           }
@@ -1827,7 +1990,7 @@ Astro.response.headers.set('Cache-Control', 'no-store');
 
         mediaData.items.unshift({
           id: Date.now().toString(),
-          type,
+          type: finalType,
           src,
           thumbnail: thumb,
           category,
@@ -1838,13 +2001,17 @@ Astro.response.headers.set('Cache-Control', 'no-store');
           desc,
           descEn: desc,
         });
-        await saveState('تم رفع الصورة وإضافتها إلى المعرض بنجاح.');
+        await saveState(finalType === 'video' ? 'تم رفع الفيديو وإضافته إلى المعرض بنجاح.' : 'تم رفع الصورة وإضافتها إلى المعرض بنجاح.');
         addForm.reset();
         syncMediaTypeFields();
         if (itemFileLabel) itemFileLabel.textContent = 'اختر صورة من الهاتف أو الكمبيوتر...';
+        if (itemVideoLabel) itemVideoLabel.textContent = 'اختر ملف فيديو (MP4, WebM)...';
         itemPreviewWrap?.classList.add('hidden');
+        videoPreviewWrap?.classList.add('hidden');
+        if (videoPreviewPlayer) videoPreviewPlayer.src = '';
+        extractedVideoThumb = null;
       } catch (err) {
-        showToast(err instanceof Error ? err.message : 'فشل رفع الصورة.', true);
+        showToast(err instanceof Error ? err.message : 'فشل إضافة الوسائط.', true);
       } finally {
         if (addSubmitBtn) addSubmitBtn.disabled = false;
       }

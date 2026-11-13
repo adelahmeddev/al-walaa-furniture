@@ -39,6 +39,14 @@ CREATE TABLE IF NOT EXISTS uploaded_images (
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE IF NOT EXISTS uploaded_file_chunks (
+  file_id TEXT NOT NULL,
+  chunk_index INTEGER NOT NULL,
+  data BLOB NOT NULL,
+  PRIMARY KEY (file_id, chunk_index)
+);
+CREATE INDEX IF NOT EXISTS idx_chunks_file_id ON uploaded_file_chunks(file_id);
+
 CREATE TABLE IF NOT EXISTS page_visits (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   path TEXT NOT NULL,

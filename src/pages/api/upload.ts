@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { checkAdminAuth, getRuntimeEnv, saveUploadedImage } from '../../utils/db';
+import { checkAdminAuth, getRuntimeEnv, saveUploadedFile } from '../../utils/db';
 
 const JSON_HEADERS = {
   'Content-Type': 'application/json; charset=utf-8',
@@ -27,14 +27,15 @@ export const POST: APIRoute = async ({ request, locals }) => {
     const formData = await request.formData();
     const file = formData.get('file');
     if (!(file instanceof File)) {
-      return new Response(JSON.stringify({ ok: false, error: 'No image file provided' }), {
+      return new Response(JSON.stringify({ ok: false, error: 'No file provided' }), {
         status: 400,
         headers: JSON_HEADERS,
       });
     }
 
+    const mimeType = file.type || (file.name.endsWith('.mp4') ? 'video/mp4' : 'application/octet-stream');
     const bytes = new Uint8Array(await file.arrayBuffer());
-    const saved = await saveUploadedImage(db, bytes, file.type || 'image/webp');
+    const saved = await saveUploadedFile(db, bytes, mimeType);
     return new Response(JSON.stringify({ ok: true, ...saved }), {
       status: 201,
       headers: JSON_HEADERS,

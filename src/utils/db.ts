@@ -131,6 +131,15 @@ async function ensureSchemaAndSeed(db: D1Database): Promise<void> {
       )
     `),
     db.prepare(`
+      CREATE TABLE IF NOT EXISTS uploaded_file_chunks (
+        file_id TEXT NOT NULL,
+        chunk_index INTEGER NOT NULL,
+        data BLOB NOT NULL,
+        PRIMARY KEY (file_id, chunk_index)
+      )
+    `),
+    db.prepare('CREATE INDEX IF NOT EXISTS idx_chunks_file_id ON uploaded_file_chunks(file_id)'),
+    db.prepare(`
       CREATE TABLE IF NOT EXISTS page_visits (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         path TEXT NOT NULL,
@@ -439,29 +448,64 @@ export async function replaceMediaItems(
   return clean;
 }
 
-const MAX_UPLOAD_BYTES = 1_500_000;
+const CHUNK_SIZE = 600_000;
+const MAX_UPLOAD_BYTES = 35_000_000; // 35 MB max for direct video/media uploads
 
-export async function saveUploadedImage(
+function toBytes(data: unknown): Uint8Array | null {
+  if (data instanceof Uint8Array) return data;
+  if (data instanceof ArrayBuffer) return new Uint8Array(data);
+  if (Array.isArray(data)) return new Uint8Array(data);
+  return null;
+}
+
+export async function saveUploadedFile(
   db: D1Database,
   bytes: Uint8Array,
   mimeType: string
 ): Promise<{ id: string; url: string; sizeBytes: number }> {
   await ensureSchemaAndSeed(db);
 
-  if (!mimeType.startsWith('image/')) {
-    throw new Error('Only image files are allowed');
+  const isImage = mimeType.startsWith('image/');
+  const isVideo = mimeType.startsWith('video/');
+  if (!isImage && !isVideo) {
+    throw new Error('Only image and video files are allowed');
   }
   if (bytes.byteLength === 0 || bytes.byteLength > MAX_UPLOAD_BYTES) {
-    throw new Error('Image must be under 1.5 MB after compression');
+    throw new Error('File exceeds maximum allowed limit (35 MB)');
   }
 
   const id = crypto.randomUUID();
-  await db
-    .prepare(
-      'INSERT INTO uploaded_images (id, mime_type, data, size_bytes) VALUES (?, ?, ?, ?)'
-    )
-    .bind(id, mimeType, bytes, bytes.byteLength)
-    .run();
+
+  if (bytes.byteLength <= CHUNK_SIZE) {
+    await db
+      .prepare('INSERT INTO uploaded_images (id, mime_type, data, size_bytes) VALUES (?, ?, ?, ?)')
+      .bind(id, mimeType, bytes, bytes.byteLength)
+      .run();
+  } else {
+    // Header record in uploaded_images
+    await db
+      .prepare('INSERT INTO uploaded_images (id, mime_type, data, size_bytes) VALUES (?, ?, ?, ?)')
+      .bind(id, mimeType, new Uint8Array(0), bytes.byteLength)
+      .run();
+
+    // Chunk slices in batches of 5 to avoid D1 statement limit
+    const totalChunks = Math.ceil(bytes.byteLength / CHUNK_SIZE);
+    const chunkStmts: D1PreparedStatement[] = [];
+    for (let i = 0; i < totalChunks; i++) {
+      const start = i * CHUNK_SIZE;
+      const end = Math.min(start + CHUNK_SIZE, bytes.byteLength);
+      const chunk = bytes.subarray(start, end);
+      chunkStmts.push(
+        db
+          .prepare('INSERT INTO uploaded_file_chunks (file_id, chunk_index, data) VALUES (?, ?, ?)')
+          .bind(id, i, chunk)
+      );
+    }
+
+    for (let b = 0; b < chunkStmts.length; b += 5) {
+      await db.batch(chunkStmts.slice(b, b + 5));
+    }
+  }
 
   return {
     id,
@@ -470,31 +514,49 @@ export async function saveUploadedImage(
   };
 }
 
-export async function getUploadedImage(
+export const saveUploadedImage = saveUploadedFile;
+
+export async function getUploadedFile(
   db: D1Database,
   id: string
 ): Promise<{ data: Uint8Array; mimeType: string } | null> {
   await ensureSchemaAndSeed(db);
   const row = await db
-    .prepare('SELECT mime_type, data FROM uploaded_images WHERE id = ?')
+    .prepare('SELECT mime_type, data, size_bytes FROM uploaded_images WHERE id = ?')
     .bind(id)
-    .first<{ mime_type: string; data: unknown }>();
+    .first<{ mime_type: string; data: unknown; size_bytes: number }>();
 
-  if (!row || !row.data) return null;
+  if (!row) return null;
 
-  let bytes: Uint8Array;
-  if (row.data instanceof Uint8Array) {
-    bytes = row.data;
-  } else if (row.data instanceof ArrayBuffer) {
-    bytes = new Uint8Array(row.data);
-  } else if (Array.isArray(row.data)) {
-    bytes = new Uint8Array(row.data);
-  } else {
+  const directBytes = toBytes(row.data);
+  if (directBytes && directBytes.byteLength > 0) {
+    return { data: directBytes, mimeType: row.mime_type || 'image/webp' };
+  }
+
+  // Retrieve and reassemble chunks
+  const chunkRows = await db
+    .prepare('SELECT chunk_index, data FROM uploaded_file_chunks WHERE file_id = ? ORDER BY chunk_index ASC')
+    .bind(id)
+    .all<{ chunk_index: number; data: unknown }>();
+
+  if (!chunkRows.results || chunkRows.results.length === 0) {
     return null;
   }
 
-  return { data: bytes, mimeType: row.mime_type || 'image/webp' };
+  const assembled = new Uint8Array(row.size_bytes || 0);
+  let offset = 0;
+  for (const chunkRow of chunkRows.results) {
+    const chunkBytes = toBytes(chunkRow.data);
+    if (chunkBytes) {
+      assembled.set(chunkBytes, offset);
+      offset += chunkBytes.byteLength;
+    }
+  }
+
+  return { data: assembled, mimeType: row.mime_type || 'video/mp4' };
 }
+
+export const getUploadedImage = getUploadedFile;
 
 export type TrafficRange = 'today' | '7d' | '30d' | 'all';
 

@@ -185,13 +185,24 @@ function getCategoryLabel(cat: string): string {
     container.replaceChildren();
 
     if (type === 'video') {
-      const iframe = document.createElement('iframe');
-      iframe.src = src.includes('?') ? `${src}&autoplay=1` : `${src}?autoplay=1`;
-      iframe.title = title || 'Video preview';
-      iframe.className = 'w-full h-full min-h-[320px] sm:min-h-[460px] border-0';
-      iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
-      iframe.allowFullscreen = true;
-      container.append(iframe);
+      const isDirectVideo = src.startsWith('/api/') || src.endsWith('.mp4') || src.endsWith('.webm') || src.endsWith('.mov') || (!src.includes('youtube.com') && !src.includes('youtu.be'));
+      if (isDirectVideo) {
+        const video = document.createElement('video');
+        video.src = src;
+        video.controls = true;
+        video.autoplay = true;
+        video.playsInline = true;
+        video.className = 'w-full h-full max-h-[75vh] object-contain bg-black rounded-xl';
+        container.append(video);
+      } else {
+        const iframe = document.createElement('iframe');
+        iframe.src = src.includes('?') ? `${src}&autoplay=1` : `${src}?autoplay=1`;
+        iframe.title = title || 'Video preview';
+        iframe.className = 'w-full h-full min-h-[320px] sm:min-h-[460px] border-0 rounded-xl';
+        iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+        iframe.allowFullscreen = true;
+        container.append(iframe);
+      }
     } else {
       const img = document.createElement('img');
       img.src = src;
