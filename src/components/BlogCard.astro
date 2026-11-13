@@ -38,7 +38,7 @@ const formattedDate = new Date(post.createdAt).toLocaleDateString(isAr ? 'ar-EG'
   <!-- Card Image Container -->
   <a
     href={postUrl}
-    class={`relative block overflow-hidden bg-slate-100 aspect-16/10 ${
+    class={`relative block overflow-hidden bg-slate-100 aspect-[16/10] ${
       featured ? 'md:col-span-6 md:h-full md:aspect-auto' : ''
     }`}
   >
@@ -51,7 +51,7 @@ const formattedDate = new Date(post.createdAt).toLocaleDateString(isAr ? 'ar-EG'
       height="400"
       class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
     />
-    <div class="absolute inset-0 bg-linear-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+    <div class="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
     
     <span
       class={`absolute top-3.5 ltr:left-3.5 rtl:right-3.5 text-xs font-bold px-3 py-1 rounded-full border shadow-xs ${categoryInfo.color} backdrop-blur-xs`}

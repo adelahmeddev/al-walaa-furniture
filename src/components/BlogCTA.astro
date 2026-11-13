@@ -18,47 +18,48 @@ const message = isAr
 const whatsappLink = buildWhatsAppLink(settings.whatsappNumber, message);
 ---
 
-<div class="my-10 p-6 sm:p-8 rounded-3xl bg-linear-to-br from-primary-900 via-primary-800 to-slate-900 text-white relative overflow-hidden shadow-xl border border-white/10">
-  <!-- Decorative Glow -->
-  <div class="absolute -top-24 -right-24 w-60 h-60 bg-accent-400/20 rounded-full blur-3xl pointer-events-none"></div>
-  <div class="absolute -bottom-24 -left-24 w-60 h-60 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none"></div>
+<div class="my-10 md:my-14 rounded-2xl sm:rounded-3xl bg-primary-900 bg-gradient-to-br from-primary-900 via-primary-800 to-primary-dark text-white relative overflow-hidden shadow-2xl border border-accent-400/30 border-t-4 border-t-accent-400 p-6 sm:p-8 lg:p-10 dark-surface">
+  <!-- Decorative Ambient Glows -->
+  <div class="absolute -top-24 -right-24 w-72 h-72 bg-accent-400/15 rounded-full blur-3xl pointer-events-none" aria-hidden="true"></div>
+  <div class="absolute -bottom-24 -left-24 w-72 h-72 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none" aria-hidden="true"></div>
+  <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary-600/10 rounded-full blur-3xl pointer-events-none" aria-hidden="true"></div>
 
-  <div class="relative z-10 flex flex-col md:flex-row items-center justify-between gap-6">
-    <div class="text-center md:text-start space-y-2.5">
-      <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent-400/20 text-accent-300 text-xs font-bold border border-accent-400/30">
-        <Sparkles class="w-3.5 h-3.5" aria-hidden="true" />
-        <span>{isAr ? 'عرض حصري لقراء المدونة' : 'Exclusive Reader Offer'}</span>
+  <div class="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-10">
+    <div class="text-center lg:text-start space-y-3.5 max-w-2xl">
+      <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent-400/20 text-accent-300 text-xs sm:text-sm font-bold border border-accent-400/40 shadow-xs">
+        <Sparkles class="w-4 h-4 text-accent-300 shrink-0" aria-hidden="true" />
+        <span>{isAr ? 'عرض حصري لقرّاء المدونة' : 'Exclusive Reader Offer'}</span>
       </div>
 
-      <h3 class="text-xl sm:text-2xl font-extrabold tracking-tight text-white">
+      <h3 class="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-white leading-snug">
         {isAr ? 'هل تخطط لنقل أثاث منزلك قريباً؟ احصل على تسعيرتك الآن' : 'Planning to move soon? Get your instant quote today'}
       </h3>
 
-      <p class="text-slate-300 text-sm max-w-xl leading-relaxed">
+      <p class="text-slate-200 text-sm sm:text-base leading-relaxed">
         {isAr
           ? 'احصل على خصم 20% هذا الأسبوع مع ضمان مكتوب ضد الكسر، سيارات مغلقة ومجهزة، وأوناش هيدروليكية حتى الدور 20.'
           : 'Claim your 20% discount this week with a written damage guarantee, enclosed padded trucks, and hydraulic hoists up to floor 20.'}
       </p>
 
-      <div class="flex flex-wrap items-center justify-center md:justify-start gap-4 pt-1 text-xs text-slate-300">
-        <span class="inline-flex items-center gap-1">
-          <ShieldCheck class="w-4 h-4 text-emerald-400" aria-hidden="true" />
+      <div class="flex flex-wrap items-center justify-center lg:justify-start gap-2.5 sm:gap-3 pt-1 text-xs sm:text-sm">
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-slate-200 font-medium">
+          <ShieldCheck class="w-4 h-4 text-emerald-400 shrink-0" aria-hidden="true" />
           <span>{isAr ? 'ضمان مكتوب وسعر ثابت' : 'Written Guarantee & Fixed Rates'}</span>
         </span>
-        <span class="inline-flex items-center gap-1">
-          <ShieldCheck class="w-4 h-4 text-emerald-400" aria-hidden="true" />
+        <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-slate-200 font-medium">
+          <ShieldCheck class="w-4 h-4 text-emerald-400 shrink-0" aria-hidden="true" />
           <span>{isAr ? 'معاينة واستشارة مجانية' : 'Free Consultation & Survey'}</span>
         </span>
       </div>
     </div>
 
     <!-- Action Buttons -->
-    <div class="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto shrink-0">
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3.5 w-full lg:w-auto shrink-0">
       <a
         href={whatsappLink}
         target="_blank"
         rel="noopener noreferrer"
-        class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl bg-whatsapp hover:bg-whatsapp-hover text-white font-bold text-sm shadow-lg hover:shadow-emerald-500/25 transition-all active:scale-[0.98]"
+        class="inline-flex items-center justify-center gap-2.5 px-7 py-4 rounded-xl bg-whatsapp hover:bg-whatsapp-hover text-white font-bold text-base shadow-lg hover:shadow-emerald-500/25 transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 min-h-[50px]"
       >
         <MessageCircle class="w-5 h-5 shrink-0" aria-hidden="true" />
         <span>{isAr ? 'احسب السعر عبر واتساب' : 'Get Quote on WhatsApp'}</span>
@@ -67,10 +68,10 @@ const whatsappLink = buildWhatsAppLink(settings.whatsappNumber, message);
       <a
         href={`tel:${settings.phone}`}
         dir="ltr"
-        class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-sm border border-white/20 transition-all active:scale-[0.98]"
+        class="inline-flex items-center justify-center gap-2.5 px-6 py-4 rounded-xl bg-white hover:bg-stone-100 text-primary-900 font-bold text-base shadow-md transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0 min-h-[50px]"
       >
-        <Phone class="w-4 h-4 text-accent-300 shrink-0" aria-hidden="true" />
-        <span>{settings.displayPhone}</span>
+        <Phone class="w-4 h-4 text-accent shrink-0" aria-hidden="true" />
+        <span class="font-mono">{settings.displayPhone}</span>
       </a>
     </div>
   </div>
