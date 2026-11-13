@@ -31,8 +31,7 @@ const switchText = isAr ? 'English' : 'عربي';
 const phone = settings.phone;
 const displayPhone = settings.displayPhone;
 const whatsappNumber = settings.whatsappNumber;
-
-const displayWhatsapp = whatsappNumber === phone ? displayPhone : formatEgyptPhone(whatsappNumber, displayPhone);
+const displayWhatsapp = settings.displayWhatsapp || (whatsappNumber.startsWith('01') ? whatsappNumber : (whatsappNumber === phone ? displayPhone : formatEgyptPhone(whatsappNumber, displayPhone)));
 const message = isAr
   ? 'مرحباً، أريد الاستفسار وحجز خدمة نقل العفش مع خصم 20%'
   : 'Hello, I would like to inquire and book a furniture moving service with the 20% discount';

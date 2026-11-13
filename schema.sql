@@ -5,6 +5,7 @@ CREATE TABLE IF NOT EXISTS site_settings (
   phone TEXT NOT NULL,
   display_phone TEXT NOT NULL,
   whatsapp_number TEXT NOT NULL,
+  display_whatsapp TEXT NOT NULL DEFAULT '',
   working_hours TEXT NOT NULL,
   top_bar_enabled INTEGER NOT NULL DEFAULT 1,
   social_facebook TEXT NOT NULL DEFAULT '',

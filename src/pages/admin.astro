@@ -453,59 +453,121 @@ Astro.response.headers.set('Cache-Control', 'no-store');
               <Sliders class="w-5 h-5 text-accent-300" aria-hidden="true" />
               <span>إدارة أرقام التواصل وحسابات السوشيال</span>
             </h2>
-            <p class="text-xs text-slate-300 mt-1">تعديل أرقام الهاتف والواتساب في الشريط العلوي، والتحكم في ظهور الشريط العلوي وروابط حسابات التواصل الاجتماعي</p>
+            <p class="text-xs text-slate-300 mt-1">تعديل أرقام الهاتف والواتساب في الشريط العلوي والأزرار، وتحديد رقمين مختلفين مع التحكم الكامل في كيفية ظهورهما للزوار</p>
           </div>
 
-          <form id="settings-form" class="space-y-5">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div>
-                <label for="setting-whatsapp" class="text-xs font-bold text-slate-200 mb-1.5 flex items-center gap-1.5">
-                  <MessageCircle class="w-4 h-4 text-emerald-300" aria-hidden="true" />
-                  <span>رقم الواتساب (wa.me) *</span>
-                </label>
-                <input
-                  type="text"
-                  id="setting-whatsapp"
-                  dir="ltr"
-                  placeholder="201000000000"
-                  class="w-full bg-slate-950/80 border border-white/15 rounded-xl px-3.5 py-3 text-sm font-mono text-white placeholder-slate-400 transition-all duration-200 focus:border-accent-300 focus:ring-2 focus:ring-accent-300/30 outline-none"
-                  required
-                />
-                <span class="text-[11px] text-slate-400 mt-1 block">بدون علامة + أو مسافات</span>
+          <!-- Live Top Bar Preview -->
+          <div class="mb-6 p-4 rounded-xl bg-slate-950/70 border border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <div class="flex items-center gap-2 text-slate-300 font-semibold">
+              <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>معاينة حية للشريط العلوي كما يظهر للعملاء:</span>
+            </div>
+            <div class="flex items-center gap-3 bg-primary-900 px-4 py-2 rounded-lg border border-accent-400/30 font-mono text-xs shadow-inner">
+              <!-- Direct Call Preview -->
+              <span class="inline-flex items-center gap-1.5 text-white">
+                <Phone class="w-3.5 h-3.5 text-accent-300 shrink-0" aria-hidden="true" />
+                <span id="preview-display-phone" class="font-bold">01000000000</span>
+              </span>
+              <span class="text-white/30">|</span>
+              <!-- WhatsApp Preview -->
+              <span class="inline-flex items-center gap-1.5 text-emerald-300">
+                <MessageCircle class="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                <span id="preview-display-whatsapp" class="font-bold">01119833348</span>
+              </span>
+            </div>
+          </div>
+
+          <form id="settings-form" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+              <!-- Direct Phone Card -->
+              <div class="p-4 sm:p-5 rounded-xl bg-slate-950/50 border border-accent-400/25 space-y-4">
+                <div class="flex items-center gap-2 pb-2 border-b border-white/10">
+                  <div class="w-7 h-7 rounded-lg bg-accent-400/20 text-accent-300 flex items-center justify-center">
+                    <Phone class="w-4 h-4" aria-hidden="true" />
+                  </div>
+                  <div>
+                    <h3 class="text-xs font-extrabold text-white">رقم الاتصال المباشر (Phone Call)</h3>
+                    <p class="text-[11px] text-slate-400">الرقم المخصص للمكالمات الهاتفية</p>
+                  </div>
+                </div>
+
+                <div>
+                  <label for="setting-phone" class="text-xs font-bold text-slate-200 mb-1.5 block">
+                    الرقم الفعلي للاتصال (tel:) *
+                  </label>
+                  <input
+                    type="text"
+                    id="setting-phone"
+                    dir="ltr"
+                    placeholder="01012345678"
+                    class="w-full bg-slate-900 border border-white/15 rounded-xl px-3.5 py-2.5 text-sm font-mono text-white placeholder-slate-500 transition-all duration-200 focus:border-accent-300 focus:ring-2 focus:ring-accent-300/30 outline-none"
+                    required
+                  />
+                  <span class="text-[11px] text-slate-400 mt-1 block">الرقم الذي يطلبه الهاتف عند النقر للاتصال</span>
+                </div>
+
+                <div>
+                  <label for="setting-display-phone" class="text-xs font-bold text-slate-200 mb-1.5 block">
+                    الرقم الظاهر للاتصال في الشريط العلوي *
+                  </label>
+                  <input
+                    type="text"
+                    id="setting-display-phone"
+                    dir="ltr"
+                    placeholder="010 1234 5678"
+                    class="w-full bg-slate-900 border border-white/15 rounded-xl px-3.5 py-2.5 text-sm font-mono text-white placeholder-slate-500 transition-all duration-200 focus:border-accent-300 focus:ring-2 focus:ring-accent-300/30 outline-none"
+                    required
+                  />
+                  <span class="text-[11px] text-slate-400 mt-1 block">النص أو الرقم المكتوب بجوار أيقونة الهاتف 📞</span>
+                </div>
               </div>
 
-              <div>
-                <label for="setting-phone" class="text-xs font-bold text-slate-200 mb-1.5 flex items-center gap-1.5">
-                  <Phone class="w-4 h-4 text-accent-300" aria-hidden="true" />
-                  <span>رقم الاتصال المباشر (tel:) *</span>
-                </label>
-                <input
-                  type="text"
-                  id="setting-phone"
-                  dir="ltr"
-                  placeholder="201000000000"
-                  class="w-full bg-slate-950/80 border border-white/15 rounded-xl px-3.5 py-3 text-sm font-mono text-white placeholder-slate-400 transition-all duration-200 focus:border-accent-300 focus:ring-2 focus:ring-accent-300/30 outline-none"
-                  required
-                />
-                <span class="text-[11px] text-slate-400 mt-1 block">الرقم الفعلي للاتصال</span>
-              </div>
+              <!-- WhatsApp Card -->
+              <div class="p-4 sm:p-5 rounded-xl bg-slate-950/50 border border-emerald-500/25 space-y-4">
+                <div class="flex items-center gap-2 pb-2 border-b border-white/10">
+                  <div class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-300 flex items-center justify-center">
+                    <MessageCircle class="w-4 h-4" aria-hidden="true" />
+                  </div>
+                  <div>
+                    <h3 class="text-xs font-extrabold text-white">رقم الواتساب (WhatsApp)</h3>
+                    <p class="text-[11px] text-slate-400">الرقم المخصص لمحادثات الواتساب</p>
+                  </div>
+                </div>
 
-              <div>
-                <label for="setting-display-phone" class="text-xs font-bold text-slate-200 mb-1.5 flex items-center gap-1.5">
-                  <Phone class="w-4 h-4 text-sky-300" aria-hidden="true" />
-                  <span>الرقم الظاهر للعميل *</span>
-                </label>
-                <input
-                  type="text"
-                  id="setting-display-phone"
-                  dir="ltr"
-                  placeholder="+20 100 000 0000"
-                  class="w-full bg-slate-950/80 border border-white/15 rounded-xl px-3.5 py-3 text-sm font-mono text-white placeholder-slate-400 transition-all duration-200 focus:border-accent-300 focus:ring-2 focus:ring-accent-300/30 outline-none"
-                  required
-                />
-                <span class="text-[11px] text-slate-400 mt-1 block">النص المنسق على الأزرار</span>
-              </div>
+                <div>
+                  <label for="setting-whatsapp" class="text-xs font-bold text-slate-200 mb-1.5 block">
+                    رقم الواتساب الفعلي (wa.me) *
+                  </label>
+                  <input
+                    type="text"
+                    id="setting-whatsapp"
+                    dir="ltr"
+                    placeholder="01119833348 أو 201119833348"
+                    class="w-full bg-slate-900 border border-white/15 rounded-xl px-3.5 py-2.5 text-sm font-mono text-white placeholder-slate-500 transition-all duration-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/30 outline-none"
+                    required
+                  />
+                  <span class="text-[11px] text-slate-400 mt-1 block">يقبل 011... أو 2011... لفتح المحادثة تلقائياً</span>
+                </div>
 
+                <div>
+                  <label for="setting-display-whatsapp" class="text-xs font-bold text-slate-200 mb-1.5 block">
+                    الرقم الظاهر للواتساب في الشريط العلوي *
+                  </label>
+                  <input
+                    type="text"
+                    id="setting-display-whatsapp"
+                    dir="ltr"
+                    placeholder="01119833348"
+                    class="w-full bg-slate-900 border border-white/15 rounded-xl px-3.5 py-2.5 text-sm font-mono text-white placeholder-slate-500 transition-all duration-200 focus:border-emerald-400 focus:ring-2 focus:ring-emerald-400/30 outline-none"
+                    required
+                  />
+                  <span class="text-[11px] text-slate-400 mt-1 block">النص أو الرقم المكتوب بجوار أيقونة الواتساب 💬</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Working Hours & Options -->
+            <div class="p-4 sm:p-5 rounded-xl bg-slate-950/45 border border-white/10 space-y-4">
               <div>
                 <label for="setting-hours" class="text-xs font-bold text-slate-200 mb-1.5 flex items-center gap-1.5">
                   <Clock class="w-4 h-4 text-amber-300" aria-hidden="true" />
@@ -515,7 +577,7 @@ Astro.response.headers.set('Cache-Control', 'no-store');
                   type="text"
                   id="setting-hours"
                   placeholder="خدمة عملاء 24 ساعة / 7 أيام"
-                  class="w-full bg-slate-950/80 border border-white/15 rounded-xl px-3.5 py-3 text-sm text-white placeholder-slate-400 transition-all duration-200 focus:border-accent-300 focus:ring-2 focus:ring-accent-300/30 outline-none"
+                  class="w-full bg-slate-900 border border-white/15 rounded-xl px-3.5 py-2.5 text-sm text-white placeholder-slate-500 transition-all duration-200 focus:border-accent-300 focus:ring-2 focus:ring-accent-300/30 outline-none"
                   required
                 />
                 <span class="text-[11px] text-slate-400 mt-1 block">تظهر في الشريط العلوي والفوتر</span>
@@ -1422,6 +1484,7 @@ Astro.response.headers.set('Cache-Control', 'no-store');
     let currentSettings = JSON.parse(JSON.stringify(initialSettings));
 
     const whatsappInput = document.getElementById('setting-whatsapp');
+    const displayWhatsappInput = document.getElementById('setting-display-whatsapp');
     const phoneInput = document.getElementById('setting-phone');
     const displayPhoneInput = document.getElementById('setting-display-phone');
     const hoursInput = document.getElementById('setting-hours');
@@ -1433,16 +1496,32 @@ Astro.response.headers.set('Cache-Control', 'no-store');
     const settingsForm = document.getElementById('settings-form');
     const settingsStatus = document.getElementById('settings-status');
 
+    const previewPhone = document.getElementById('preview-display-phone');
+    const previewWhatsapp = document.getElementById('preview-display-whatsapp');
+
+    function updateTopBarPreview() {
+      const pVal = displayPhoneInput?.value.trim() || phoneInput?.value.trim() || '01000000000';
+      const wVal = displayWhatsappInput?.value.trim() || whatsappInput?.value.trim() || '01119833348';
+      if (previewPhone) previewPhone.textContent = pVal;
+      if (previewWhatsapp) previewWhatsapp.textContent = wVal;
+    }
+
+    [phoneInput, displayPhoneInput, whatsappInput, displayWhatsappInput].forEach((el) => {
+      el?.addEventListener('input', updateTopBarPreview);
+    });
+
     function populateSettingsForm(data) {
       if (whatsappInput) whatsappInput.value = data.whatsappNumber || '';
+      if (displayWhatsappInput) displayWhatsappInput.value = data.displayWhatsapp || data.whatsappNumber || '';
       if (phoneInput) phoneInput.value = data.phone || '';
-      if (displayPhoneInput) displayPhoneInput.value = data.displayPhone || '';
+      if (displayPhoneInput) displayPhoneInput.value = data.displayPhone || data.phone || '';
       if (hoursInput) hoursInput.value = data.workingHours || '';
       if (topBarEnabledInput) topBarEnabledInput.checked = data.topBar?.enabled !== false;
       if (socialFacebookInput) socialFacebookInput.value = data.social?.facebook || '';
       if (socialInstagramInput) socialInstagramInput.value = data.social?.instagram || '';
       if (socialTiktokInput) socialTiktokInput.value = data.social?.tiktok || '';
       if (socialYoutubeInput) socialYoutubeInput.value = data.social?.youtube || '';
+      updateTopBarPreview();
     }
 
     populateSettingsForm(currentSettings);
@@ -1451,6 +1530,7 @@ Astro.response.headers.set('Cache-Control', 'no-store');
       e.preventDefault();
       const payload = {
         whatsappNumber: whatsappInput.value.trim(),
+        displayWhatsapp: displayWhatsappInput ? displayWhatsappInput.value.trim() : '',
         phone: phoneInput.value.trim(),
         displayPhone: displayPhoneInput.value.trim(),
         workingHours: hoursInput.value.trim(),

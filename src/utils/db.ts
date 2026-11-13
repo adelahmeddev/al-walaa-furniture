@@ -19,6 +19,7 @@ interface SettingsRow {
   phone: string;
   display_phone: string;
   whatsapp_number: string;
+  display_whatsapp?: string;
   working_hours: string;
   top_bar_enabled: number;
   social_facebook: string;
@@ -93,6 +94,7 @@ async function ensureSchemaAndSeed(db: D1Database): Promise<void> {
         phone TEXT NOT NULL,
         display_phone TEXT NOT NULL,
         whatsapp_number TEXT NOT NULL,
+        display_whatsapp TEXT NOT NULL DEFAULT '',
         working_hours TEXT NOT NULL,
         top_bar_enabled INTEGER NOT NULL DEFAULT 1,
         social_facebook TEXT NOT NULL DEFAULT '',
@@ -166,6 +168,12 @@ async function ensureSchemaAndSeed(db: D1Database): Promise<void> {
     db.prepare('CREATE INDEX IF NOT EXISTS idx_blog_category ON blog_posts(category)'),
   ]);
 
+  try {
+    await db.prepare("ALTER TABLE site_settings ADD COLUMN display_whatsapp TEXT NOT NULL DEFAULT ''").run();
+  } catch {
+    // Column already exists or fresh table
+  }
+
   const settingsCount = await db
     .prepare('SELECT COUNT(*) AS cnt FROM site_settings')
     .first<{ cnt: number }>();
@@ -175,14 +183,15 @@ async function ensureSchemaAndSeed(db: D1Database): Promise<void> {
     await db
       .prepare(`
         INSERT OR IGNORE INTO site_settings (
-          id, phone, display_phone, whatsapp_number, working_hours,
+          id, phone, display_phone, whatsapp_number, display_whatsapp, working_hours,
           top_bar_enabled, social_facebook, social_instagram, social_tiktok, social_youtube
-        ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `)
       .bind(
         def.phone,
         def.displayPhone,
         def.whatsappNumber,
+        def.displayWhatsapp,
         def.workingHours,
         def.topBar?.enabled !== false ? 1 : 0,
         def.social?.facebook || '',
@@ -275,16 +284,18 @@ export async function getSiteSettings(db?: D1Database): Promise<SiteSettings> {
     await ensureSchemaAndSeed(db);
     const row = await db
       .prepare(
-        'SELECT phone, display_phone, whatsapp_number, working_hours, top_bar_enabled, social_facebook, social_instagram, social_tiktok, social_youtube FROM site_settings WHERE id = 1'
+        'SELECT phone, display_phone, whatsapp_number, display_whatsapp, working_hours, top_bar_enabled, social_facebook, social_instagram, social_tiktok, social_youtube FROM site_settings WHERE id = 1'
       )
       .first<SettingsRow>();
 
     if (!row) return getInitialSettings();
 
+    const def = getInitialSettings();
     return {
       phone: row.phone,
       displayPhone: row.display_phone,
       whatsappNumber: row.whatsapp_number,
+      displayWhatsapp: row.display_whatsapp || (row.whatsapp_number.startsWith('01') ? row.whatsapp_number : def.displayWhatsapp || row.display_phone),
       workingHours: row.working_hours,
       topBar: {
         enabled: row.top_bar_enabled === 1,
@@ -312,13 +323,14 @@ export async function saveSiteSettings(
   await db
     .prepare(`
       INSERT INTO site_settings (
-        id, phone, display_phone, whatsapp_number, working_hours,
+        id, phone, display_phone, whatsapp_number, display_whatsapp, working_hours,
         top_bar_enabled, social_facebook, social_instagram, social_tiktok, social_youtube, updated_at
-      ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      ) VALUES (1, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
       ON CONFLICT(id) DO UPDATE SET
         phone = excluded.phone,
         display_phone = excluded.display_phone,
         whatsapp_number = excluded.whatsapp_number,
+        display_whatsapp = excluded.display_whatsapp,
         working_hours = excluded.working_hours,
         top_bar_enabled = excluded.top_bar_enabled,
         social_facebook = excluded.social_facebook,
@@ -331,6 +343,7 @@ export async function saveSiteSettings(
       clean.phone,
       clean.displayPhone,
       clean.whatsappNumber,
+      clean.displayWhatsapp,
       clean.workingHours,
       clean.topBar?.enabled !== false ? 1 : 0,
       clean.social?.facebook || '',

@@ -1,7 +1,8 @@
 {
-  "phone": "201000000000",
-  "displayPhone": "+20 100 000 0000",
-  "whatsappNumber": "201000000000",
+  "phone": "01119833348",
+  "displayPhone": "01119833348",
+  "whatsappNumber": "01119833348",
+  "displayWhatsapp": "01119833348",
   "workingHours": "خدمة عملاء 24 ساعة / 7 أيام",
   "topBar": {
     "enabled": true

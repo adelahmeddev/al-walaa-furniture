@@ -5,6 +5,7 @@ export interface SiteSettings {
   phone: string;
   displayPhone: string;
   whatsappNumber: string;
+  displayWhatsapp: string;
   workingHours: string;
   topBar?: {
     enabled?: boolean;
@@ -62,7 +63,10 @@ export function formatEgyptPhone(raw: string, fallback: string = ''): string {
 }
 
 export function buildWhatsAppLink(number: string, messageText: string): string {
-  const cleanNumber = String(number || '').replace(/\D/g, '');
+  let cleanNumber = String(number || '').replace(/\D/g, '');
+  if (cleanNumber.startsWith('01') && cleanNumber.length === 11) {
+    cleanNumber = `2${cleanNumber}`;
+  }
   const encoded = encodeURIComponent(messageText);
   return `https://wa.me/${cleanNumber}?text=${encoded}`;
 }
@@ -90,15 +94,19 @@ function safeUrlOrEmpty(raw: unknown): string {
 export function sanitizeSettings(input: Partial<SiteSettings>): SiteSettings {
   const base = getInitialSettings();
   const phone = String(input.phone ?? base.phone).replace(/[^\d+]/g, '').trim() || base.phone;
-  const whatsappNumber =
-    String(input.whatsappNumber ?? base.whatsappNumber).replace(/\D/g, '').trim() || base.whatsappNumber;
+  let whatsappNumber =
+    String(input.whatsappNumber ?? base.whatsappNumber).replace(/[^\d+]/g, '').trim() || base.whatsappNumber;
   const displayPhone = String(input.displayPhone ?? base.displayPhone).trim() || formatEgyptPhone(phone, base.displayPhone);
+  const displayWhatsapp =
+    String(input.displayWhatsapp ?? base.displayWhatsapp ?? '').trim() ||
+    (whatsappNumber.startsWith('01') ? whatsappNumber : formatEgyptPhone(whatsappNumber, displayPhone));
   const workingHours = String(input.workingHours ?? base.workingHours).trim() || base.workingHours;
 
   return {
     phone,
     displayPhone,
     whatsappNumber,
+    displayWhatsapp,
     workingHours,
     topBar: {
       enabled: input.topBar?.enabled !== false,
