@@ -455,6 +455,25 @@ function toBytes(data: unknown): Uint8Array | null {
   if (data instanceof Uint8Array) return data;
   if (data instanceof ArrayBuffer) return new Uint8Array(data);
   if (Array.isArray(data)) return new Uint8Array(data);
+  if (typeof data === 'string') {
+    try {
+      const binary = atob(data);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      return bytes;
+    } catch {
+      return null;
+    }
+  }
+  if (data && typeof data === 'object') {
+    if ('data' in data && Array.isArray((data as { data: unknown }).data)) {
+      return new Uint8Array((data as { data: number[] }).data);
+    }
+    if ('buffer' in data && (data as { buffer: unknown }).buffer instanceof ArrayBuffer) {
+      const view = data as ArrayBufferView;
+      return new Uint8Array(view.buffer.slice(view.byteOffset, view.byteOffset + view.byteLength));
+    }
+  }
   return null;
 }
 
@@ -488,13 +507,14 @@ export async function saveUploadedFile(
       .bind(id, mimeType, new Uint8Array(0), bytes.byteLength)
       .run();
 
-    // Chunk slices in batches of 5 to avoid D1 statement limit
+    // Chunk slices in batches of 3 to avoid D1 statement and payload limits
     const totalChunks = Math.ceil(bytes.byteLength / CHUNK_SIZE);
     const chunkStmts: D1PreparedStatement[] = [];
     for (let i = 0; i < totalChunks; i++) {
       const start = i * CHUNK_SIZE;
       const end = Math.min(start + CHUNK_SIZE, bytes.byteLength);
-      const chunk = bytes.subarray(start, end);
+      // Use slice to produce an isolated buffer with byteOffset 0
+      const chunk = bytes.slice(start, end);
       chunkStmts.push(
         db
           .prepare('INSERT INTO uploaded_file_chunks (file_id, chunk_index, data) VALUES (?, ?, ?)')
@@ -502,8 +522,8 @@ export async function saveUploadedFile(
       );
     }
 
-    for (let b = 0; b < chunkStmts.length; b += 5) {
-      await db.batch(chunkStmts.slice(b, b + 5));
+    for (let b = 0; b < chunkStmts.length; b += 3) {
+      await db.batch(chunkStmts.slice(b, b + 3));
     }
   }
 
@@ -516,10 +536,18 @@ export async function saveUploadedFile(
 
 export const saveUploadedImage = saveUploadedFile;
 
-export async function getUploadedFile(
+export async function getUploadedFileRange(
   db: D1Database,
-  id: string
-): Promise<{ data: Uint8Array; mimeType: string } | null> {
+  id: string,
+  startByte: number = 0,
+  requestedEndByte?: number
+): Promise<{
+  data: Uint8Array;
+  mimeType: string;
+  totalLength: number;
+  start: number;
+  end: number;
+} | null> {
   await ensureSchemaAndSeed(db);
   const row = await db
     .prepare('SELECT mime_type, data, size_bytes FROM uploaded_images WHERE id = ?')
@@ -528,32 +556,79 @@ export async function getUploadedFile(
 
   if (!row) return null;
 
+  const totalLength = Number(row.size_bytes) || 0;
+  const mimeType = row.mime_type || 'application/octet-stream';
+
   const directBytes = toBytes(row.data);
   if (directBytes && directBytes.byteLength > 0) {
-    return { data: directBytes, mimeType: row.mime_type || 'image/webp' };
+    const actualTotal = directBytes.byteLength;
+    const start = Math.max(0, Math.min(startByte, actualTotal - 1));
+    const end = Math.min(
+      typeof requestedEndByte === 'number' && !isNaN(requestedEndByte) ? requestedEndByte : actualTotal - 1,
+      actualTotal - 1
+    );
+    const slice = directBytes.slice(start, end + 1);
+    return { data: slice, mimeType, totalLength: actualTotal, start, end };
   }
 
-  // Retrieve and reassemble chunks
+  if (totalLength <= 0) return null;
+
+  const start = Math.max(0, Math.min(startByte, totalLength - 1));
+  // Stream window: 1.2 MB per request to prevent worker RAM and D1 query result size limits
+  const defaultChunkSpan = 1_200_000;
+  const end = Math.min(
+    typeof requestedEndByte === 'number' && !isNaN(requestedEndByte)
+      ? requestedEndByte
+      : Math.min(start + defaultChunkSpan - 1, totalLength - 1),
+    totalLength - 1
+  );
+
+  const startChunkIndex = Math.floor(start / CHUNK_SIZE);
+  const endChunkIndex = Math.floor(end / CHUNK_SIZE);
+
+  // Fetch only the specific chunks needed for this range window
   const chunkRows = await db
-    .prepare('SELECT chunk_index, data FROM uploaded_file_chunks WHERE file_id = ? ORDER BY chunk_index ASC')
-    .bind(id)
+    .prepare(
+      'SELECT chunk_index, data FROM uploaded_file_chunks WHERE file_id = ? AND chunk_index >= ? AND chunk_index <= ? ORDER BY chunk_index ASC'
+    )
+    .bind(id, startChunkIndex, endChunkIndex)
     .all<{ chunk_index: number; data: unknown }>();
 
   if (!chunkRows.results || chunkRows.results.length === 0) {
     return null;
   }
 
-  const assembled = new Uint8Array(row.size_bytes || 0);
-  let offset = 0;
+  const neededLength = end - start + 1;
+  const result = new Uint8Array(neededLength);
+
   for (const chunkRow of chunkRows.results) {
     const chunkBytes = toBytes(chunkRow.data);
-    if (chunkBytes) {
-      assembled.set(chunkBytes, offset);
-      offset += chunkBytes.byteLength;
+    if (!chunkBytes) continue;
+
+    const chunkStart = chunkRow.chunk_index * CHUNK_SIZE;
+    const chunkEnd = chunkStart + chunkBytes.byteLength - 1;
+
+    const overlapStart = Math.max(start, chunkStart);
+    const overlapEnd = Math.min(end, chunkEnd);
+
+    if (overlapStart <= overlapEnd) {
+      const srcOffset = overlapStart - chunkStart;
+      const destOffset = overlapStart - start;
+      const copyLen = overlapEnd - overlapStart + 1;
+      result.set(chunkBytes.subarray(srcOffset, srcOffset + copyLen), destOffset);
     }
   }
 
-  return { data: assembled, mimeType: row.mime_type || 'video/mp4' };
+  return { data: result, mimeType, totalLength, start, end };
+}
+
+export async function getUploadedFile(
+  db: D1Database,
+  id: string
+): Promise<{ data: Uint8Array; mimeType: string } | null> {
+  const file = await getUploadedFileRange(db, id, 0);
+  if (!file) return null;
+  return { data: file.data, mimeType: file.mimeType };
 }
 
 export const getUploadedImage = getUploadedFile;

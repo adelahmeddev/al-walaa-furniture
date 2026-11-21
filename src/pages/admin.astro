@@ -676,7 +676,7 @@ Astro.response.headers.set('Cache-Control', 'no-store');
                 <select id="item-type" class="w-full bg-slate-950/80 border border-white/15 rounded-xl px-3.5 py-3 text-sm font-medium text-white transition-all duration-200 focus:border-accent-300 focus:ring-2 focus:ring-accent-300/30 outline-none">
                   <option value="image">صورة (رفع من الجهاز)</option>
                   <option value="video-upload">فيديو (رفع من الجهاز - MP4 / WebM)</option>
-                  <option value="video-youtube">فيديو من يوتيوب (رابط YouTube)</option>
+                  <option value="video-youtube">فيديو من يوتيوب أو رابط مباشر (YouTube / مسار /media/...)</option>
                 </select>
               </div>
 
@@ -721,12 +721,12 @@ Astro.response.headers.set('Cache-Control', 'no-store');
 
               <!-- YouTube Link Input -->
               <div id="video-url-wrap" class="hidden">
-                <label for="item-src" class="block text-xs font-bold text-slate-200 mb-1.5">رابط فيديو يوتيوب *</label>
+                <label for="item-src" class="block text-xs font-bold text-slate-200 mb-1.5">رابط يوتيوب أو مسار الفيديو *</label>
                 <input
                   type="text"
                   id="item-src"
                   dir="ltr"
-                  placeholder="https://www.youtube.com/watch?v=..."
+                  placeholder="https://www.youtube.com/watch?v=... أو /media/hydraulic-lift-promo-v2.mp4"
                   class="w-full bg-slate-950/80 border border-white/15 rounded-xl px-3.5 py-3 text-sm font-medium text-white placeholder-slate-400 transition-all duration-200 focus:border-accent-300 focus:ring-2 focus:ring-accent-300/30 outline-none"
                 />
               </div>
@@ -1978,14 +1978,14 @@ Astro.response.headers.set('Cache-Control', 'no-store');
           finalType = 'video';
           src = itemSrcInput.value.trim();
           if (!src) {
-            showToast('يرجى إدخال رابط يوتيوب.', true);
+            showToast('يرجى إدخال رابط يوتيوب أو مسار الفيديو.', true);
             return;
           }
           if (src.includes('watch?v=')) {
             src = src.replace('watch?v=', 'embed/');
           }
           const thumbFile = document.getElementById('item-thumb-file')?.files?.[0];
-          thumb = thumbFile ? await uploadImageFile(thumbFile) : '/media/truck-loading-cairo.jpg';
+          thumb = thumbFile ? await uploadImageFile(thumbFile) : (src.includes('hydraulic') ? '/media/hydraulic-hoist-cairo.jpg' : '/media/truck-loading-cairo.jpg');
         }
 
         mediaData.items.unshift({
