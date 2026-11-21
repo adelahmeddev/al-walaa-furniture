@@ -77,6 +77,19 @@
       "altEn": "Climate-controlled secured furniture storage warehouse in Egypt",
       "desc": "تغطية كل قطعة بالبلاستيك المحكم ووضعها على طبليات مرتفعة داخل مستودعات منظمة ومراقبة 24/7.",
       "descEn": "Individually sealed sofas and labeled cartons stacked cleanly on elevated pallets under 24/7 monitoring."
+    },
+    {
+      "id": "7",
+      "type": "video",
+      "src": "/media/hydraulic-lift-promo-v3.mp4",
+      "thumbnail": "/media/hydraulic-lift-promo-thumb.jpg",
+      "category": "moving",
+      "title": "رفع وتنزيل العفش بأحدث ونش هيدروليكي مؤمن للأدوار العليا",
+      "titleEn": "Safe High-Floor Furniture Lifting with Hydraulic Hoist",
+      "alt": "فيديو توضيحي لرفع الأثاث بالونش الهيدروليكي للأدوار المرتفعة",
+      "altEn": "Hydraulic furniture hoist lifting household items safely to balcony",
+      "desc": "عملية رفع عفش متكاملة باستخدام ونش هيدروليكي حديث يصل حتى الدور الـ 20 مع تثبيت وتأمين شامل لحماية الأثاث من أي خدوش أثناء الصعود.",
+      "descEn": "High-reach exterior hydraulic hoist lifting wrapped furniture safely to high-floor balconies without stairs."
     }
   ]
 }
