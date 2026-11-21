@@ -23,6 +23,7 @@ import {
   Activity,
   BookOpen,
   Video,
+  Upload,
 } from '@lucide/astro';
 
 export const prerender = false;
@@ -277,6 +278,45 @@ Astro.response.headers.set('Cache-Control', 'no-store');
         <span id="admin-toast-text" class="flex-1"></span>
       </div>
       <div id="admin-toast-bar" class="toast-progress-bar absolute inset-x-0 bottom-0 h-0.5 bg-emerald-400"></div>
+    </div>
+
+    <!-- Floating Upload Progress Tracker (Active on any upload across the page) -->
+    <div
+      id="floating-upload-tracker"
+      class="hidden fixed bottom-6 end-6 z-50 w-[calc(100%-3rem)] max-w-md bg-slate-900/95 backdrop-blur-xl border border-accent-400/40 rounded-2xl p-4 sm:p-5 shadow-2xl shadow-black/80 text-white transition-all duration-300 pointer-events-auto"
+      role="progressbar"
+      aria-valuemin="0"
+      aria-valuemax="100"
+      aria-valuenow="0"
+    >
+      <div class="flex items-center justify-between gap-3 mb-2.5">
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="w-9 h-9 rounded-xl bg-accent-400/15 border border-accent-400/30 flex items-center justify-center shrink-0">
+            <Upload class="w-4 h-4 text-accent-400 animate-bounce" />
+          </div>
+          <div class="min-w-0">
+            <h4 id="tracker-title" class="text-sm font-bold text-white truncate">جارٍ رفع الملف...</h4>
+            <p id="tracker-filename" class="text-[11px] text-slate-400 truncate font-mono" dir="ltr"></p>
+          </div>
+        </div>
+        <div class="text-end shrink-0">
+          <span id="tracker-percent" class="text-xl font-black text-accent-400 font-mono">0%</span>
+        </div>
+      </div>
+
+      <!-- Progress Bar Track -->
+      <div class="w-full h-3 bg-slate-950/80 rounded-full overflow-hidden p-0.5 border border-white/10 relative">
+        <div
+          id="tracker-progress-bar"
+          class="h-full bg-gradient-to-r from-accent-500 via-amber-400 to-emerald-400 rounded-full transition-all duration-100 ease-out shadow-sm"
+          style="width: 0%;"
+        ></div>
+      </div>
+
+      <div class="flex items-center justify-between text-xs text-slate-400 mt-2.5 font-medium">
+        <span id="tracker-bytes" class="font-mono text-slate-300" dir="ltr">0 B / 0 B</span>
+        <span id="tracker-status" class="text-accent-300">يرجى الانتظار...</span>
+      </div>
     </div>
 
     <!-- Main Container -->
@@ -797,14 +837,39 @@ Astro.response.headers.set('Cache-Control', 'no-store');
               </div>
             </div>
 
+            <!-- Inline Upload Progress Card -->
+            <div id="media-upload-progress-wrap" class="hidden bg-slate-950/90 border border-accent-400/35 rounded-2xl p-4 shadow-xl transition-all duration-300">
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-2.5 h-2.5 rounded-full bg-accent-400 animate-ping"></div>
+                  <span id="media-upload-progress-title" class="text-sm font-bold text-white">جارٍ رفع الملف...</span>
+                </div>
+                <div class="flex items-center gap-3">
+                  <span id="media-upload-progress-detail" class="text-xs text-slate-400 font-mono" dir="ltr">0 B / 0 B</span>
+                  <span id="media-upload-progress-percent" class="text-sm font-black text-accent-400 font-mono">0%</span>
+                </div>
+              </div>
+
+              <!-- Progress bar track -->
+              <div class="w-full h-3 bg-slate-800/80 rounded-full overflow-hidden p-0.5 border border-white/10">
+                <div
+                  id="media-upload-progress-bar"
+                  class="h-full bg-gradient-to-r from-accent-500 via-amber-400 to-emerald-400 rounded-full transition-all duration-150 ease-out shadow-sm"
+                  style="width: 0%;"
+                ></div>
+              </div>
+              <p id="media-upload-progress-hint" class="text-[11px] text-slate-400 mt-2">يرجى الانتظار حتى اكتمال التحميل وحفظ التغييرات في قاعدة البيانات.</p>
+            </div>
+
             <div class="flex justify-end pt-2">
               <button
                 type="submit"
                 id="add-media-submit"
-                class="inline-flex items-center gap-2 bg-gradient-to-l from-accent-500 to-accent-600 hover:from-accent-400 hover:to-accent-500 active:scale-[0.98] text-white font-bold px-7 py-3.5 rounded-xl shadow-lg shadow-accent-950/30 transition-all duration-200 min-h-[48px]"
+                class="inline-flex items-center gap-2 bg-gradient-to-l from-accent-500 to-accent-600 hover:from-accent-400 hover:to-accent-500 active:scale-[0.98] text-white font-bold px-7 py-3.5 rounded-xl shadow-lg shadow-accent-950/30 transition-all duration-200 min-h-[48px] disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                <Plus class="w-5 h-5" aria-hidden="true" />
-                <span>إضافة إلى المعرض</span>
+                <Plus id="add-media-submit-icon" class="w-5 h-5" aria-hidden="true" />
+                <span id="add-media-submit-spinner" class="hidden w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                <span id="add-media-submit-text">إضافة إلى المعرض</span>
               </button>
             </div>
           </form>
@@ -1733,28 +1798,81 @@ Astro.response.headers.set('Cache-Control', 'no-store');
       return blob;
     }
 
-    async function uploadMediaFile(file, isVideo = false) {
+    function formatBytes(bytes) {
+      if (!bytes || bytes === 0) return '0 B';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB'];
+      const i = Math.min(sizes.length - 1, Math.floor(Math.log(bytes) / Math.log(k)));
+      return (bytes / Math.pow(k, i)).toFixed(1) + ' ' + sizes[i];
+    }
+
+    function uploadFileWithProgress(fileToUpload, fileName, onProgress) {
+      return new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        const formData = new FormData();
+        formData.append('file', fileToUpload, fileName);
+
+        xhr.open('POST', '/api/upload', true);
+        xhr.setRequestHeader('x-admin-key', getAdminKey());
+
+        xhr.upload.onprogress = (e) => {
+          if (e.lengthComputable && typeof onProgress === 'function') {
+            const percent = Math.min(100, Math.round((e.loaded / e.total) * 100));
+            onProgress(percent, e.loaded, e.total);
+          }
+        };
+
+        xhr.onload = () => {
+          let data = {};
+          try {
+            data = JSON.parse(xhr.responseText || '{}');
+          } catch (err) {
+            data = { error: xhr.statusText || 'تعذر قراءة رد الخادم' };
+          }
+          if (xhr.status >= 200 && xhr.status < 300 && data.ok) {
+            resolve(data.url);
+          } else {
+            reject(new Error(data.error || `فشل الرفع (كود ${xhr.status})`));
+          }
+        };
+
+        xhr.onerror = () => {
+          reject(new Error('انقطع الاتصال أثناء الرفع، يرجى التحقق من اتصالك بالإنترنت والمحاولة مجدداً'));
+        };
+
+        xhr.ontimeout = () => {
+          reject(new Error('استغرقت عملية الرفع وقتاً طويلاً، يرجى المحاولة لاحقاً'));
+        };
+
+        xhr.send(formData);
+      });
+    }
+
+    async function uploadMediaFile(file, isVideo = false, onProgress = null) {
       let fileToUpload = file;
       if (!isVideo && file.type && file.type.startsWith('image/')) {
+        if (typeof onProgress === 'function') {
+          onProgress({ stage: 'compressing', percent: 0, text: 'جارٍ ضغط وتحسين الصورة بصيغة WebP...' });
+        }
         fileToUpload = await compressToWebP(file);
       }
       const ext = isVideo ? (file.name.split('.').pop() || 'mp4') : (fileToUpload.type === 'image/webp' ? 'webp' : 'jpg');
-      const formData = new FormData();
-      formData.append('file', fileToUpload, file.name || `media.${ext}`);
+      const fileName = file.name || `media.${ext}`;
 
-      const res = await fetch('/api/upload', {
-        method: 'POST',
-        headers: { 'x-admin-key': getAdminKey() },
-        body: formData,
+      return uploadFileWithProgress(fileToUpload, fileName, (percent, loaded, total) => {
+        if (typeof onProgress === 'function') {
+          onProgress({
+            stage: 'uploading',
+            percent,
+            loaded,
+            total,
+            text: isVideo ? `جارٍ رفع الفيديو... ${percent}%` : `جارٍ رفع الصورة... ${percent}%`,
+          });
+        }
       });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || (isVideo ? 'فشل رفع ملف الفيديو' : 'فشل رفع الصورة'));
-      }
-      return data.url;
     }
 
-    const uploadImageFile = (file) => uploadMediaFile(file, false);
+    const uploadImageFile = (file, onProgress = null) => uploadMediaFile(file, false, onProgress);
 
     function captureVideoThumbnail(videoFile) {
       return new Promise((resolve) => {
@@ -1894,6 +2012,126 @@ Astro.response.headers.set('Cache-Control', 'no-store');
       }
     });
 
+    // Upload Progress Tracking Engine
+    const trackerWrap = document.getElementById('floating-upload-tracker');
+    const trackerTitle = document.getElementById('tracker-title');
+    const trackerFileName = document.getElementById('tracker-filename');
+    const trackerPercent = document.getElementById('tracker-percent');
+    const trackerBar = document.getElementById('tracker-progress-bar');
+    const trackerBytes = document.getElementById('tracker-bytes');
+    const trackerStatus = document.getElementById('tracker-status');
+
+    const inlineProgressWrap = document.getElementById('media-upload-progress-wrap');
+    const inlineProgressTitle = document.getElementById('media-upload-progress-title');
+    const inlineProgressDetail = document.getElementById('media-upload-progress-detail');
+    const inlineProgressPercent = document.getElementById('media-upload-progress-percent');
+    const inlineProgressBar = document.getElementById('media-upload-progress-bar');
+    const inlineProgressHint = document.getElementById('media-upload-progress-hint');
+
+    const addSubmitIcon = document.getElementById('add-media-submit-icon');
+    const addSubmitSpinner = document.getElementById('add-media-submit-spinner');
+    const addSubmitText = document.getElementById('add-media-submit-text');
+
+    const uploadTracker = {
+      start(title, fileName, initialStatus) {
+        if (trackerTitle) trackerTitle.textContent = title;
+        if (trackerFileName) trackerFileName.textContent = fileName || '';
+        if (trackerStatus) trackerStatus.textContent = initialStatus || 'جارٍ الرفع...';
+        if (trackerPercent) trackerPercent.textContent = '0%';
+        if (trackerBytes) trackerBytes.textContent = '0 B';
+        if (trackerBar) trackerBar.style.width = '0%';
+        trackerWrap?.classList.remove('hidden');
+
+        if (inlineProgressTitle) inlineProgressTitle.textContent = title;
+        if (inlineProgressDetail) inlineProgressDetail.textContent = fileName || '';
+        if (inlineProgressPercent) inlineProgressPercent.textContent = '0%';
+        if (inlineProgressBar) inlineProgressBar.style.width = '0%';
+        if (inlineProgressHint) inlineProgressHint.textContent = initialStatus || 'يرجى الانتظار حتى اكتمال التحميل...';
+        inlineProgressWrap?.classList.remove('hidden');
+
+        if (addSubmitBtn) addSubmitBtn.disabled = true;
+        if (addSubmitIcon) addSubmitIcon.classList.add('hidden');
+        if (addSubmitSpinner) addSubmitSpinner.classList.remove('hidden');
+        if (addSubmitText) addSubmitText.textContent = 'جارٍ الرفع... 0%';
+      },
+
+      update(info) {
+        if (!info) return;
+        if (info.stage === 'compressing') {
+          if (trackerStatus) trackerStatus.textContent = info.text;
+          if (inlineProgressHint) inlineProgressHint.textContent = info.text;
+          if (addSubmitText) addSubmitText.textContent = 'جارٍ تحسين وضغط الصورة...';
+          return;
+        }
+
+        const pct = Math.min(100, Math.max(0, info.percent || 0));
+        const loadedStr = formatBytes(info.loaded || 0);
+        const totalStr = formatBytes(info.total || 0);
+        const detailText = `${loadedStr} / ${totalStr}`;
+
+        if (trackerPercent) trackerPercent.textContent = `${pct}%`;
+        if (trackerBar) trackerBar.style.width = `${pct}%`;
+        if (trackerBytes) trackerBytes.textContent = detailText;
+        if (trackerStatus) trackerStatus.textContent = pct === 100 ? 'اكتمل نقل البيانات، جاري المعالجة...' : (info.text || `جارٍ الرفع... ${pct}%`);
+
+        if (inlineProgressPercent) inlineProgressPercent.textContent = `${pct}%`;
+        if (inlineProgressBar) inlineProgressBar.style.width = `${pct}%`;
+        if (inlineProgressDetail) inlineProgressDetail.textContent = detailText;
+        if (inlineProgressHint) inlineProgressHint.textContent = pct === 100 ? 'اكتمل نقل الملف إلى الخادم، جاري حفظ البيانات...' : (info.text || `جارٍ الرفع... ${pct}%`);
+
+        if (addSubmitText) addSubmitText.textContent = `جارٍ الرفع... ${pct}%`;
+      },
+
+      step(title, fileName, status) {
+        if (trackerTitle) trackerTitle.textContent = title;
+        if (trackerFileName) trackerFileName.textContent = fileName || '';
+        if (trackerStatus) trackerStatus.textContent = status || '';
+        if (trackerPercent) trackerPercent.textContent = '0%';
+        if (trackerBar) trackerBar.style.width = '0%';
+
+        if (inlineProgressTitle) inlineProgressTitle.textContent = title;
+        if (inlineProgressDetail) inlineProgressDetail.textContent = fileName || '';
+        if (inlineProgressPercent) inlineProgressPercent.textContent = '0%';
+        if (inlineProgressBar) inlineProgressBar.style.width = '0%';
+        if (inlineProgressHint) inlineProgressHint.textContent = status || '';
+      },
+
+      finish(successMsg) {
+        if (trackerPercent) trackerPercent.textContent = '100%';
+        if (trackerBar) trackerBar.style.width = '100%';
+        if (trackerStatus) trackerStatus.textContent = 'تم اكتمال الرفع بنجاح!';
+        if (inlineProgressPercent) inlineProgressPercent.textContent = '100%';
+        if (inlineProgressBar) inlineProgressBar.style.width = '100%';
+        if (inlineProgressHint) inlineProgressHint.textContent = 'تم اكتمال الرفع وحفظ البيانات في المعرض.';
+
+        showToast(successMsg || 'تم اكتمال الرفع بنجاح.');
+
+        setTimeout(() => {
+          trackerWrap?.classList.add('hidden');
+          inlineProgressWrap?.classList.add('hidden');
+          if (addSubmitBtn) addSubmitBtn.disabled = false;
+          if (addSubmitIcon) addSubmitIcon.classList.remove('hidden');
+          if (addSubmitSpinner) addSubmitSpinner.classList.add('hidden');
+          if (addSubmitText) addSubmitText.textContent = 'إضافة إلى المعرض';
+        }, 1200);
+      },
+
+      error(errMsg) {
+        if (trackerStatus) trackerStatus.textContent = 'حدث خطأ أثناء الرفع!';
+        if (inlineProgressHint) inlineProgressHint.textContent = errMsg || 'فشل الرفع.';
+        showToast(errMsg || 'فشل الرفع.', true);
+
+        setTimeout(() => {
+          trackerWrap?.classList.add('hidden');
+          inlineProgressWrap?.classList.add('hidden');
+          if (addSubmitBtn) addSubmitBtn.disabled = false;
+          if (addSubmitIcon) addSubmitIcon.classList.remove('hidden');
+          if (addSubmitSpinner) addSubmitSpinner.classList.add('hidden');
+          if (addSubmitText) addSubmitText.textContent = 'إضافة إلى المعرض';
+        }, 2500);
+      }
+    };
+
     // Replace photo directly on an existing gallery item
     const replaceInput = document.getElementById('replace-photo-input');
     let replaceTargetIndex = -1;
@@ -1912,9 +2150,9 @@ Astro.response.headers.set('Cache-Control', 'no-store');
       const targetIndex = replaceTargetIndex;
       replaceTargetIndex = -1;
 
-      showToast('جاري ضغط ورفع الصورة الجديدة...');
+      uploadTracker.start('تحديث صورة المعرض', file.name, 'جارٍ ضغط وتحسين الصورة...');
       try {
-        const uploadedUrl = await uploadImageFile(file);
+        const uploadedUrl = await uploadImageFile(file, (info) => uploadTracker.update(info));
         const target = mediaData.items[targetIndex];
         if (target.type === 'video') {
           target.thumbnail = uploadedUrl;
@@ -1923,8 +2161,9 @@ Astro.response.headers.set('Cache-Control', 'no-store');
           target.thumbnail = uploadedUrl;
         }
         await saveState('تم تغيير الصورة وتحديث المعرض لكل الزوار.');
+        uploadTracker.finish('تم تغيير الصورة وتحديث المعرض لكل الزوار.');
       } catch (err) {
-        showToast(err instanceof Error ? err.message : 'فشل تغيير الصورة.', true);
+        uploadTracker.error(err instanceof Error ? err.message : 'فشل تغيير الصورة.');
       }
     });
 
@@ -1942,7 +2181,6 @@ Astro.response.headers.set('Cache-Control', 'no-store');
       let thumb = '';
       let finalType = 'image';
 
-      if (addSubmitBtn) addSubmitBtn.disabled = true;
       try {
         if (rawType === 'image') {
           finalType = 'image';
@@ -1951,8 +2189,8 @@ Astro.response.headers.set('Cache-Control', 'no-store');
             showToast('يرجى اختيار صورة من جهازك أولاً.', true);
             return;
           }
-          showToast('جاري ضغط ورفع الصورة...');
-          src = await uploadImageFile(file);
+          uploadTracker.start('رفع صورة المعرض', file.name, 'جارٍ ضغط وتحسين الصورة...');
+          src = await uploadImageFile(file, (info) => uploadTracker.update(info));
           thumb = src;
         } else if (rawType === 'video-upload') {
           finalType = 'video';
@@ -1961,16 +2199,16 @@ Astro.response.headers.set('Cache-Control', 'no-store');
             showToast('يرجى اختيار ملف فيديو من جهازك أولاً.', true);
             return;
           }
-          showToast('جاري رفع ملف الفيديو... قد يستغرق لحظات حسب الحجم.');
-          src = await uploadMediaFile(videoFile, true);
+          uploadTracker.start('رفع فيديو المعرض', videoFile.name, 'جارٍ بدء رفع ملف الفيديو...');
+          src = await uploadMediaFile(videoFile, true, (info) => uploadTracker.update(info));
 
           const customThumbFile = document.getElementById('item-thumb-file')?.files?.[0];
           if (customThumbFile) {
-            showToast('جاري رفع غلاف الفيديو...');
-            thumb = await uploadImageFile(customThumbFile);
+            uploadTracker.step('رفع غلاف الفيديو', customThumbFile.name, 'جارٍ رفع صورة الغلاف...');
+            thumb = await uploadImageFile(customThumbFile, (info) => uploadTracker.update(info));
           } else if (extractedVideoThumb) {
-            showToast('جاري رفع الصورة المصغرة المستخرجة...');
-            thumb = await uploadImageFile(extractedVideoThumb);
+            uploadTracker.step('غلاف الفيديو المستخرج', 'thumb.webp', 'جارٍ رفع الغلاف المستخرج...');
+            thumb = await uploadImageFile(extractedVideoThumb, (info) => uploadTracker.update(info));
           } else {
             thumb = '/media/truck-loading-cairo.jpg';
           }
@@ -1985,7 +2223,12 @@ Astro.response.headers.set('Cache-Control', 'no-store');
             src = src.replace('watch?v=', 'embed/');
           }
           const thumbFile = document.getElementById('item-thumb-file')?.files?.[0];
-          thumb = thumbFile ? await uploadImageFile(thumbFile) : (src.includes('hydraulic') ? '/media/hydraulic-hoist-cairo.jpg' : '/media/truck-loading-cairo.jpg');
+          if (thumbFile) {
+            uploadTracker.start('رفع غلاف الفيديو', thumbFile.name, 'جارٍ رفع صورة الغلاف...');
+            thumb = await uploadImageFile(thumbFile, (info) => uploadTracker.update(info));
+          } else {
+            thumb = src.includes('hydraulic') ? '/media/hydraulic-hoist-cairo.jpg' : '/media/truck-loading-cairo.jpg';
+          }
         }
 
         mediaData.items.unshift({
@@ -2001,7 +2244,11 @@ Astro.response.headers.set('Cache-Control', 'no-store');
           desc,
           descEn: desc,
         });
-        await saveState(finalType === 'video' ? 'تم رفع الفيديو وإضافته إلى المعرض بنجاح.' : 'تم رفع الصورة وإضافتها إلى المعرض بنجاح.');
+
+        const successMsg = finalType === 'video' ? 'تم رفع الفيديو وإضافته إلى المعرض بنجاح.' : 'تم رفع الصورة وإضافتها إلى المعرض بنجاح.';
+        await saveState(successMsg);
+        uploadTracker.finish(successMsg);
+
         addForm.reset();
         syncMediaTypeFields();
         if (itemFileLabel) itemFileLabel.textContent = 'اختر صورة من الهاتف أو الكمبيوتر...';
@@ -2011,9 +2258,7 @@ Astro.response.headers.set('Cache-Control', 'no-store');
         if (videoPreviewPlayer) videoPreviewPlayer.src = '';
         extractedVideoThumb = null;
       } catch (err) {
-        showToast(err instanceof Error ? err.message : 'فشل إضافة الوسائط.', true);
-      } finally {
-        if (addSubmitBtn) addSubmitBtn.disabled = false;
+        uploadTracker.error(err instanceof Error ? err.message : 'فشل إضافة الوسائط.');
       }
     });
 
